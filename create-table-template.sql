@@ -152,3 +152,4 @@ SELECT * FROM seats WHERE flightId = 1;
 
 SELECT seatId, seatNumber, isAvailable FROM seats WHERE flightId = 1;
 SELECT DISTINCT seatNumber, isAvailable FROM seats WHERE flightId = 1;
+SELECT * FROM seats WHERE flightId = 1;

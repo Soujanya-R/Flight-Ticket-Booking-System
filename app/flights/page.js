@@ -15,31 +15,24 @@ export default function FlightsPage() {
   const convertDateFormat = (dateString) => {
     if (!dateString) return "";
     const parts = dateString.split("/");
-    if (parts.length === 3) {
-      return `${parts[2]}-${parts[0]}-${parts[1]}`;
-    }
-    return dateString;
+    return parts.length === 3 ? `${parts[2]}-${parts[0]}-${parts[1]}` : dateString;
   };
 
   useEffect(() => {
     const fetchFlights = async () => {
-      if (!from || !to || !date) {
-        console.error("❌ Missing required fields:", { from, to, date });
-        return;
-      }
+      if (!from || !to || !date) return console.error("❌ Missing fields:", { from, to, date });
 
       const formattedDate = convertDateFormat(date);
-      console.log("🔹 Fetching flights for:", { from, to, formattedDate });
-
       setLoading(true);
+
       try {
         const response = await fetch(`/api/getFlights?from=${from}&to=${to}&date=${formattedDate}`);
         const data = await response.json();
-        console.log("🔹 API Response:", data);
         setFlights(data.flights || []);
       } catch (error) {
         console.error("❌ Error fetching flights:", error);
       }
+
       setLoading(false);
     };
 
@@ -47,10 +40,8 @@ export default function FlightsPage() {
   }, [from, to, date]);
 
   const handleSelectFlight = (flightId) => {
-    console.log(`✈️ Flight ${flightId} selected!`);
-    router.push(`/bookings?flightId=${flightId}`); // Make sure flightId is added in URL
+    router.push(`/seats?flightId=${flightId}`);
   };
-  
 
   return (
     <div className="p-8">
@@ -59,20 +50,22 @@ export default function FlightsPage() {
       {loading ? (
         <p>Loading flights...</p>
       ) : flights.length > 0 ? (
-        flights.map((flight) => (
-          <div key={flight.flightId} className="border p-4 mb-2 rounded-md">
-            <p className="text-gray-700 font-medium">✈️ {flight.flightNumber}</p>
-            <p className="text-gray-600">
-              {new Date(flight.departureTime).toLocaleString()} → {new Date(flight.arrivalTime).toLocaleString()}
-            </p>
-            <button
-              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={() => handleSelectFlight(flight.flightId)}
-            >
-              Select Flight
-            </button>
-          </div>
-        ))
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {flights.map((flight) => (
+            <div key={flight.flightId} className="border p-4 rounded-lg shadow-lg">
+              <p className="text-lg font-semibold">✈️ {flight.flightNumber}</p>
+              <p className="text-gray-600">
+                {new Date(flight.departureTime).toLocaleString()} → {new Date(flight.arrivalTime).toLocaleString()}
+              </p>
+              <button
+                className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-700 transition"
+                onClick={() => handleSelectFlight(flight.flightId)}
+              >
+                Select Flight
+              </button>
+            </div>
+          ))}
+        </div>
       ) : (
         <p>No flights found.</p>
       )}

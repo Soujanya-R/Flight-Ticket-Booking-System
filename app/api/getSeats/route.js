@@ -1,23 +1,22 @@
-"use server";
+import { NextResponse } from "next/server";
+import db from "@/lib/db"; // Ensure correct DB path
 
-import db from "@/lib/db";
-
-export async function getSeats(req, res) {
-  const { flightId } = req.query;
-
+export async function GET(request) {
   try {
-    const [rows] = await db.query(
-      "SELECT seatId, seatNumber, isAvailable FROM Seat WHERE flightId = ?",
-      [flightId]
-    );
+    const { searchParams } = new URL(request.url);
+    const flightId = searchParams.get("flightId");
 
-    console.log("✅ Fetched Seats from DB:", rows);
+    if (!flightId) {
+      return NextResponse.json({ error: "Flight ID is required" }, { status: 400 });
+    }
 
-    res.json({ seats: rows });
+    const [seats] = await db.query("SELECT * FROM seats WHERE flightId = ?", [flightId]);
+
+    console.log("🎟️ Retrieved seats:", seats);
+
+    return NextResponse.json({ seats: seats.length ? seats : [] });
   } catch (error) {
     console.error("❌ Error fetching seats:", error);
-    res.status(500).json({ error: "Failed to fetch seats" });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
-
-export default getSeats;
