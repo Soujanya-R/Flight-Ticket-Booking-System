@@ -1,32 +1,35 @@
-import db from "@/lib/db";
+import { getDatabase } from "../../../lib/db"; 
 
 export async function GET(req) {
   try {
-    const { searchParams } = new URL(req.url);
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
-    const date = searchParams.get("date");
+    const url = new URL(req.url);
+    const from = url.searchParams.get("from");
+    const to = url.searchParams.get("to");
+    const date = url.searchParams.get("date");
 
     if (!from || !to || !date) {
-      return Response.json({ error: "Missing parameters", flights: [] });
+      return new Response(JSON.stringify({ message: "Missing parameters" }), { status: 400 });
     }
 
-    console.log("🔹 Searching for Flights:", { from, to, date });
+    const db = await getDatabase();
+    console.log("🔹 Querying Flights:", { from, to, date });
 
-    const query = `
-      SELECT * FROM Flight 
-      WHERE DATE(departureTime) = ? 
-      AND fromLocation = ? 
-      AND toLocation = ?
-    `;
-    
-    const [flights] = await db.query(query, [date, from, to]);
+    // Ensure departureTime is compared properly as a DATE
+    const [flights] = await db.execute(
+      "SELECT flightId, flightNumber, departureTime, arrivalTime, totalSeats, fromLocation, toLocation FROM Flight WHERE fromLocation = ? AND toLocation = ? AND DATE(departureTime) = ?",
+      [from, to, date]
+    );
 
     console.log("✅ Flights Found:", flights);
 
-    return Response.json({ flights });
+    if (!flights || flights.length === 0) {
+      return new Response(JSON.stringify({ message: "No flights found." }), { status: 404 });
+    }
+
+    return new Response(JSON.stringify({ flights }), { status: 200 });
+
   } catch (error) {
     console.error("❌ Error fetching flights:", error);
-    return Response.json({ error: "Internal Server Error", flights: [] });
+    return new Response(JSON.stringify({ message: "Internal Server Error" }), { status: 500 });
   }
 }

@@ -11,26 +11,30 @@ export default function FlightsPage() {
 
   const [flights, setFlights] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const convertDateFormat = (dateString) => {
-    if (!dateString) return "";
-    const parts = dateString.split("/");
-    return parts.length === 3 ? `${parts[2]}-${parts[0]}-${parts[1]}` : dateString;
-  };
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchFlights = async () => {
-      if (!from || !to || !date) return console.error("❌ Missing fields:", { from, to, date });
+    if (!from || !to || !date) {
+      setError("Missing required fields.");
+      return;
+    }
 
-      const formattedDate = convertDateFormat(date);
+    const fetchFlights = async () => {
       setLoading(true);
+      setError("");
 
       try {
-        const response = await fetch(`/api/getFlights?from=${from}&to=${to}&date=${formattedDate}`);
+        const response = await fetch(`/api/getFlights?from=${from}&to=${to}&date=${date}`);
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to fetch flights.");
+        }
+
         setFlights(data.flights || []);
-      } catch (error) {
-        console.error("❌ Error fetching flights:", error);
+      } catch (err) {
+        console.error("❌ Fetch Error:", err);
+        setError("Could not fetch flights. Please try again.");
       }
 
       setLoading(false);
@@ -46,6 +50,8 @@ export default function FlightsPage() {
   return (
     <div className="p-8">
       <h2 className="text-2xl font-bold">Available Flights</h2>
+
+      {error && <p className="text-red-500">{error}</p>}
 
       {loading ? (
         <p>Loading flights...</p>

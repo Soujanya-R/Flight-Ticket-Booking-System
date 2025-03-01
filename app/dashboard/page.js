@@ -1,17 +1,62 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // ✅ Ensure this is correct
+"use client";  // ✅ This tells Next.js it's a Client Component
 
-export default async function Dashboard() {
-  const session = await getServerSession(authOptions);
-  if (!session) return <p className="text-red-500">❌ Access Denied. Please <a href="/login">Login</a></p>;
+import { useEffect, useState } from "react";
+
+export default function Dashboard({ userId }) {
+  const [bookings, setBookings] = useState([]);
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const response = await fetch(`/api/getBookings?userId=${userId}`);
+        const data = await response.json();
+        console.log("📌 API Response:", data);  // Debugging step
+        setBookings(data.bookings || []);
+      } catch (error) {
+        console.error("❌ Error fetching bookings:", error);
+      }
+    };
+  
+    if (userId) fetchBookings();
+  }, [userId]);
+  
+
+  const handleCancelBooking = async (bookingId) => {
+    try {
+      const response = await fetch(`/api/cancelBooking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId }),
+      });
+
+      if (response.ok) {
+        setBookings(bookings.filter((b) => b.bookingId !== bookingId));
+      } else {
+        console.error("Failed to cancel booking");
+      }
+    } catch (error) {
+      console.error("❌ Error canceling booking:", error);
+    }
+  };
 
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-bold">Welcome, {session.user.name}!</h2>
-      <p className="text-gray-700">This is your secure dashboard.</p>
-      <a href="/api/auth/signout" className="px-4 py-2 bg-red-500 text-white rounded mt-4">
-        Logout
-      </a>
+    <div>
+      <h2>Dashboard</h2>
+      <h3>Your Bookings</h3>
+      {bookings.length > 0 ? (
+        <ul>
+          {bookings.map((booking) => (
+            <li key={booking.bookingId}>
+              Flight: {booking.flightId}, Seat: {booking.seatNumber}
+              <button onClick={() => handleCancelBooking(booking.bookingId)} style={{ marginLeft: "10px", color: "red" }}>
+                Cancel
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No bookings found.</p>
+      )}
     </div>
   );
 }

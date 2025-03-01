@@ -1,32 +1,24 @@
-import db from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getDatabase } from "../../../lib/db"; 
 
 export async function GET(req) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return Response.json({ error: "User not authenticated" }, { status: 401 });
+    const url = new URL(req.url);
+    const flightId = url.searchParams.get("flightId");
+
+    if (!flightId) {
+      return new Response(JSON.stringify({ message: "Missing flightId" }), { status: 400 });
     }
 
-    console.log("🔹 Fetching bookings for User ID:", session.user.id);
+    const db = await getDatabase();
+    const [seats] = await db.execute("SELECT * FROM seats WHERE flightId = ?", [flightId]);
 
-    const [bookings] = await db.query(
-      `SELECT b.bookingId, b.flightId, b.bookingDate, 
-              f.flightNumber, f.departureTime, f.arrivalTime,
-              s.seatNumber
-       FROM Booking b
-       JOIN Flight f ON b.flightId = f.flightId
-       LEFT JOIN Seat s ON s.bookingId = b.bookingId
-       WHERE b.customerId = ?`,
-      [session.user.id]
-    );
+    if (seats.length === 0) {
+      return new Response(JSON.stringify({ message: "No seats available." }), { status: 404 });
+    }
 
-    console.log("✅ Bookings Found:", bookings);
-
-    return Response.json({ bookings });
+    return new Response(JSON.stringify(seats), { status: 200 });
   } catch (error) {
-    console.error("❌ Error fetching bookings:", error);
-    return Response.json({ error: "Internal Server Error", bookings: [] }, { status: 500 });
+    console.error("❌ Error fetching seats:", error);
+    return new Response(JSON.stringify({ message: "Internal Server Error" }), { status: 500 });
   }
 }

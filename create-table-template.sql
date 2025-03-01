@@ -153,3 +153,18 @@ SELECT * FROM seats WHERE flightId = 1;
 SELECT seatId, seatNumber, isAvailable FROM seats WHERE flightId = 1;
 SELECT DISTINCT seatNumber, isAvailable FROM seats WHERE flightId = 1;
 SELECT * FROM seats WHERE flightId = 1;
+SELECT * FROM Flight WHERE fromLocation = 'BOM' AND toLocation = 'BLR' AND DATE(departureTime) = '2025-02-25';
+SELECT * FROM Flight WHERE fromLocation = 'BOM' AND toLocation = 'BLR' AND DATE(departureTime) = '2025-02-25';
+select * from Flight;
+SELECT * FROM Flight WHERE fromLocation = 'BOM' AND toLocation = 'BLR' AND DATE(departureTime) = '2025-03-25';
+INSERT INTO Flight (fromLocation, toLocation, departureTime) VALUES ('BOM', 'BLR', '2025-03-25 10:00:00');
+INSERT INTO Flight (flightNumber, fromLocation, toLocation, departureTime) 
+VALUES ('AI101', 'BOM', 'BLR', '2025-03-25 10:00:00');
+UPDATE Flight 
+SET fromLocation = 'LHR', toLocation = 'JFK'  -- Replace with actual values
+WHERE flightNumber = 'BA305';
+ALTER TABLE Flight 
+MODIFY COLUMN fromLocation VARCHAR(50) NOT NULL,
+MODIFY COLUMN toLocation VARCHAR(50) NOT NULL;
+SELECT * FROM seats WHERE flightId = 1;
+show databases;

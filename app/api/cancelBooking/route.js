@@ -1,30 +1,29 @@
+import { NextResponse } from "next/server";
 import db from "@/lib/db";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function POST(req) {
+export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return Response.json({ success: false, error: "User not authenticated." });
+    const { seatId, userId } = await request.json();
+
+    if (!seatId || !userId) {
+      return NextResponse.json({ error: "Seat ID and User ID required" }, { status: 400 });
     }
 
-    const { bookingId } = await req.json();
-    console.log("🔹 Canceling Booking ID:", bookingId);
+    const cancelQuery = `
+      UPDATE seats
+      SET isAvailable = 1, bookingId = NULL
+      WHERE seatId = ? AND bookingId = ?
+    `;
 
-    // Check if booking exists
-    const [booking] = await db.query("SELECT flightId FROM Booking WHERE bookingId = ?", [bookingId]);
-    if (booking.length === 0) return Response.json({ success: false, error: "Booking not found." });
+    const [result] = await db.query(cancelQuery, [seatId, userId]);
 
-    // Free the seat
-    await db.query("UPDATE Seat SET isAvailable = TRUE, bookingId = NULL WHERE bookingId = ?", [bookingId]);
+    if (result.affectedRows === 0) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 400 });
+    }
 
-    // Delete the booking
-    await db.query("DELETE FROM Booking WHERE bookingId = ?", [bookingId]);
-
-    return Response.json({ success: true, message: "Booking canceled successfully!" });
+    return NextResponse.json({ message: "Booking canceled successfully" }, { status: 200 });
   } catch (error) {
     console.error("❌ Error canceling booking:", error);
-    return Response.json({ success: false, error: "Cancellation failed." });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

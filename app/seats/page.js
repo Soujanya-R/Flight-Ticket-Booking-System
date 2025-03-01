@@ -1,42 +1,49 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export default function SeatsPage() {
-  const searchParams = useSearchParams();
-  const flightId = searchParams.get("flightId");
-  const router = useRouter();
+export default function SeatsPage({ searchParams }) {
+  const flightId = searchParams?.flightId || 1; // Default to flight 1 if not provided
   const [seats, setSeats] = useState([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchSeats = async () => {
+    async function fetchSeats() {
       try {
-        if (!flightId) return;
-        const response = await fetch(`/api/getseats?flightId=${flightId}`);
+        const response = await fetch(`/api/getSeats?flightId=${flightId}`);
         const data = await response.json();
-        console.log("🛫 Seats Data:", data);
-        setSeats(data.seats || []);
-      } catch (error) {
-        console.error("❌ Error fetching seats:", error);
+
+        if (response.ok) {
+          setSeats(data.seats);
+        } else {
+          setError(data.error || "Could not fetch seat data");
+        }
+      } catch (err) {
+        setError("Failed to fetch seats");
       }
-    };
+    }
 
     fetchSeats();
-  }, [flightId]); // Fetch when flightId changes
+  }, [flightId]);
 
   return (
-    <div>
-      <h2>Select Your Seat</h2>
-      {seats.length === 0 ? (
-        <p>No seats available.</p>
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Select Your Seat</h1>
+      {error ? (
+        <p className="text-red-500">{error}</p>
       ) : (
-        <ul>
+        <div className="grid grid-cols-4 gap-4">
           {seats.map((seat) => (
-            <li key={seat.seatId}>
-              {seat.seatNumber} - {seat.isAvailable ? "Available" : "Booked"}
-            </li>
+            <button
+              key={seat.id}
+              className={`p-4 border ${
+                seat.isBooked ? "bg-gray-400" : "bg-green-500"
+              }`}
+              disabled={seat.isBooked}
+            >
+              {seat.seatNumber}
+            </button>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

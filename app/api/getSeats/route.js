@@ -1,22 +1,39 @@
-import { NextResponse } from "next/server";
-import db from "@/lib/db"; // Ensure correct DB path
+import mysql from "mysql2/promise";
 
-export async function GET(request) {
+// Create a MySQL connection
+const pool = mysql.createPool({
+  host: "localhost", // Change if using a remote DB
+  user: "your_user",
+  password: "0000",
+  database: "flight_booking",
+});
+
+export async function GET(req) {
   try {
-    const { searchParams } = new URL(request.url);
-    const flightId = searchParams.get("flightId");
+    const url = new URL(req.url);
+    const flightId = url.searchParams.get("flightId");
 
     if (!flightId) {
-      return NextResponse.json({ error: "Flight ID is required" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "Flight ID is required" }), {
+        status: 400,
+      });
     }
 
-    const [seats] = await db.query("SELECT * FROM seats WHERE flightId = ?", [flightId]);
+    // Query to get seat data
+    const [rows] = await pool.query(
+      "SELECT * FROM seats WHERE flightId = ?",
+      [flightId]
+    );
 
-    console.log("🎟️ Retrieved seats:", seats);
-
-    return NextResponse.json({ seats: seats.length ? seats : [] });
+    return new Response(JSON.stringify({ seats: rows }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error("❌ Error fetching seats:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error fetching seats:", error);
+    return new Response(
+      JSON.stringify({ error: "Internal Server Error" }),
+      { status: 500 }
+    );
   }
 }
