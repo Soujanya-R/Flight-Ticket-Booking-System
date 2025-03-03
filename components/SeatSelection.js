@@ -7,7 +7,7 @@ export default function SeatSelection({ flightId }) {
   useEffect(() => {
     const fetchSeats = async () => {
       try {
-        const response = await fetch(`/api/getseats?flightId=${flightId}`);
+        const response = await fetch(`/api/getSeats?flightId=${flightId}`);
         const data = await response.json();
         console.log("🛫 Seats Data:", data);
 

@@ -3,7 +3,7 @@ import mysql from "mysql2/promise";
 // Create a MySQL connection
 const pool = mysql.createPool({
   host: "localhost", // Change if using a remote DB
-  user: "your_user",
+  user: "root",
   password: "0000",
   database: "flight_booking",
 });
@@ -21,14 +21,19 @@ export async function GET(req) {
 
     // Query to get seat data
     const [rows] = await pool.query(
-      "SELECT * FROM seats WHERE flightId = ?",
+      "SELECT seatId, seatNumber, isAvailable FROM seats WHERE flightId = ?",
       [flightId]
     );
-
-    return new Response(JSON.stringify({ seats: rows }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    
+    
+    
+    const seats = rows.map((seat) => ({
+      ...seat,
+      isAvailable: seat.isBooked === 0, // Convert `isBooked` to `isAvailable`
+    }));
+    
+    return new Response(JSON.stringify({ seats }), { status: 200 });
+    
   } catch (error) {
     console.error("Error fetching seats:", error);
     return new Response(

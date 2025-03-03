@@ -168,3 +168,4 @@ MODIFY COLUMN fromLocation VARCHAR(50) NOT NULL,
 MODIFY COLUMN toLocation VARCHAR(50) NOT NULL;
 SELECT * FROM seats WHERE flightId = 1;
 show databases;
+DESCRIBE seats;

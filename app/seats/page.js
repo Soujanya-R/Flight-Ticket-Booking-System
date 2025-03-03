@@ -1,9 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
-export default function SeatsPage({ searchParams }) {
-  const flightId = searchParams?.flightId || 1; // Default to flight 1 if not provided
+export default function SeatsPage() {
+  const searchParams = useSearchParams();
+  const flightId = searchParams.get("flightId");
   const [seats, setSeats] = useState([]);
+  const [selectedSeats, setSelectedSeats] = useState([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -11,9 +14,15 @@ export default function SeatsPage({ searchParams }) {
       try {
         const response = await fetch(`/api/getSeats?flightId=${flightId}`);
         const data = await response.json();
+        console.log("Fetched seats:", data); // Debugging line
 
         if (response.ok) {
-          setSeats(data.seats);
+          // Ensure `isAvailable` is a Boolean
+          const formattedSeats = data.seats.map(seat => ({
+            ...seat,
+            isAvailable: Boolean(seat.isAvailable), 
+          }));
+          setSeats(formattedSeats);
         } else {
           setError(data.error || "Could not fetch seat data");
         }
@@ -22,8 +31,24 @@ export default function SeatsPage({ searchParams }) {
       }
     }
 
-    fetchSeats();
+    if (flightId) fetchSeats();
   }, [flightId]);
+
+  // Toggle seat selection
+  const handleSeatSelect = (seatId) => {
+    setSelectedSeats((prev) =>
+      prev.includes(seatId) ? prev.filter((id) => id !== seatId) : [...prev, seatId]
+    );
+  };
+
+  // Confirm selection
+  const handleConfirmSelection = () => {
+    if (selectedSeats.length === 0) {
+      alert("Please select at least one seat.");
+      return;
+    }
+    alert(`Seats confirmed: ${selectedSeats.join(", ")}`);
+  };
 
   return (
     <div className="p-4">
@@ -31,19 +56,33 @@ export default function SeatsPage({ searchParams }) {
       {error ? (
         <p className="text-red-500">{error}</p>
       ) : (
-        <div className="grid grid-cols-4 gap-4">
-          {seats.map((seat) => (
-            <button
-              key={seat.id}
-              className={`p-4 border ${
-                seat.isBooked ? "bg-gray-400" : "bg-green-500"
-              }`}
-              disabled={seat.isBooked}
-            >
-              {seat.seatNumber}
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            {seats.map((seat) => (
+              <button
+                key={seat.seatId}
+                className={`p-4 border rounded-lg transition ${
+                  seat.isAvailable
+                    ? selectedSeats.includes(seat.seatId)
+                      ? "bg-blue-500 text-white" // Selected seat
+                      : "bg-green-500 text-white hover:bg-green-600" // Available seat
+                    : "bg-gray-400 text-gray-700 cursor-not-allowed" // Unavailable seat
+                }`}
+                disabled={!seat.isAvailable}
+                onClick={() => handleSeatSelect(seat.seatId)}
+              >
+                {seat.seatNumber}
+              </button>
+            ))}
+          </div>
+          {/* Confirm Selection Button */}
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            onClick={handleConfirmSelection}
+          >
+            Confirm Selection
+          </button>
+        </>
       )}
     </div>
   );
