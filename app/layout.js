@@ -1,6 +1,9 @@
+"use client";
+
+import { SessionProvider } from "next-auth/react";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
-import "./globals.css"; // Ensure global styles are imported
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,25 +15,22 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: "Flight Booking",
-  description: "Book flights easily with the best deals",
-};
-
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{
-          background: "linear-gradient(135deg, #bbe1f2, #d4e6f1)", // Gradient background
-          backgroundAttachment: "fixed", // Fixed background for scrolling effect
+          background: "linear-gradient(135deg, #bbe1f2, #d4e6f1)",
+          backgroundAttachment: "fixed",
           color: "black",
-          minHeight: "100vh", // Full height for body
+          minHeight: "100vh",
         }}
       >
-        <Navbar />
-        {children}
+        <SessionProvider>
+          <Navbar />
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

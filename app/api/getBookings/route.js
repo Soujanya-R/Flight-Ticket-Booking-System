@@ -1,24 +1,28 @@
-import { getDatabase } from "../../../lib/db"; 
+import { getDatabase } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/api/auth/[...nextauth]/route";
 
 export async function GET(req) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const url = new URL(req.url);
-    const flightId = url.searchParams.get("flightId");
-
-    if (!flightId) {
-      return new Response(JSON.stringify({ message: "Missing flightId" }), { status: 400 });
-    }
-
     const db = await getDatabase();
-    const [seats] = await db.execute("SELECT * FROM seats WHERE flightId = ?", [flightId]);
+    const [bookings] = await db.query("SELECT * FROM Booking WHERE customerId = ?", [session.user.id]);
 
-    if (seats.length === 0) {
-      return new Response(JSON.stringify({ message: "No seats available." }), { status: 404 });
-    }
+    const enrichedBookings = await Promise.all(
+      bookings.map(async (booking) => {
+        const [flights] = await db.query("SELECT * FROM Flight WHERE flightId = ?", [booking.flightId]);
+        return { ...booking, flight: flights.length > 0 ? flights[0] : null };
+      })
+    );
 
-    return new Response(JSON.stringify(seats), { status: 200 });
+    return Response.json(enrichedBookings);
   } catch (error) {
-    console.error("❌ Error fetching seats:", error);
-    return new Response(JSON.stringify({ message: "Internal Server Error" }), { status: 500 });
+    console.error("❌ Error fetching bookings:", error);
+    return Response.json({ error: "Database error" }, { status: 500 });
   }
 }

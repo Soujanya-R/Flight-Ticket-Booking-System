@@ -14,13 +14,14 @@ export default function SeatsPage() {
       try {
         const response = await fetch(`/api/getSeats?flightId=${flightId}`);
         const data = await response.json();
-        console.log("Fetched seats:", data); // Debugging line
+        console.log("Fetched seats:", JSON.stringify(data, null, 2)); // Debugging
 
         if (response.ok) {
-          // Ensure `isAvailable` is a Boolean
-          const formattedSeats = data.seats.map(seat => ({
+          // Ensure `isAvailable` is a boolean and `seatId` is correctly assigned
+          const formattedSeats = data.seats.map((seat, index) => ({
             ...seat,
-            isAvailable: Boolean(seat.isAvailable), 
+            seatId: seat.seatId || `seat-${index}`, // Ensure unique IDs
+            isAvailable: !!seat.isAvailable, // Convert to boolean
           }));
           setSeats(formattedSeats);
         } else {
@@ -69,9 +70,9 @@ export default function SeatsPage() {
                     : "bg-gray-400 text-gray-700 cursor-not-allowed" // Unavailable seat
                 }`}
                 disabled={!seat.isAvailable}
-                onClick={() => handleSeatSelect(seat.seatId)}
+                onClick={() => seat.isAvailable && handleSeatSelect(seat.seatId)}
               >
-                {seat.seatNumber}
+                {seat.seatNumber || seat.seatId} {/* Ensure something is displayed */}
               </button>
             ))}
           </div>

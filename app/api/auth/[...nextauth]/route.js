@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import db from "@/lib/db";
+import { getDatabase } from "@/lib/db";
 
 export const authOptions = {
   providers: [
@@ -9,6 +9,7 @@ export const authOptions = {
       async authorize(credentials) {
         console.log("🔹 Received Credentials:", credentials);
 
+        const db = await getDatabase(); // ✅ Move this inside `authorize()`
         const [rows] = await db.query("SELECT * FROM Users WHERE email = ?", [credentials.email]);
 
         if (rows.length === 0) {

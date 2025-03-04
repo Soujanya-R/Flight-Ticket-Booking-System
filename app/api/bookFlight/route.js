@@ -1,9 +1,10 @@
-import db from "@/lib/db";
-import { getServerSession } from "next-auth/next"; // ✅ Ensure correct import
+import { getDatabase } from "@/lib/db";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function POST(req) { // ✅ Ensure this is the ONLY `POST` function
+export async function POST(req) {
   try {
+    const db = await getDatabase(); // ✅ Initialize database correctly
     const session = await getServerSession(authOptions);
     console.log("🔹 Session Data in Booking API:", session);
 
@@ -33,7 +34,8 @@ export async function POST(req) { // ✅ Ensure this is the ONLY `POST` function
     // Update seat as booked
     await db.query("UPDATE Seat SET isAvailable = FALSE, bookingId = ? WHERE seatId = ?", [bookingResult.insertId, seatId]);
 
-    return Response.json({ success: true, message: "Booking successful!" });
+    return Response.json({ success: true, message: "Booking successful!", redirectUrl: "/confirm-booking" });
+
   } catch (error) {
     console.error("❌ Error processing booking:", error);
     return Response.json({ success: false, error: "Booking failed." }, { status: 500 });

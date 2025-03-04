@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SeatSelection({ flightId }) {
   const [seats, setSeats] = useState([]);
   const [selectedSeat, setSelectedSeat] = useState(null);
+  const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchSeats = async () => {
@@ -21,8 +24,16 @@ export default function SeatSelection({ flightId }) {
   }, [flightId]);
 
   const handleSeatSelect = (seat) => {
-    if (seat.isAvailable) {
+    if (seat.isAvailable && !bookingConfirmed) {
       setSelectedSeat(seat.seatId);
+    }
+  };
+
+  const handleConfirmSeat = () => {
+    if (selectedSeat) {
+      alert(`Seat ${selectedSeat} Confirmed!`);
+      setBookingConfirmed(true);
+      router.push(`/confirm-booking?flightId=${flightId}&seatId=${selectedSeat}`);
     }
   };
 
@@ -43,11 +54,11 @@ export default function SeatSelection({ flightId }) {
                   : "gray",
                 color: "white",
                 border: "none",
-                cursor: seat.isAvailable ? "pointer" : "not-allowed",
+                cursor: seat.isAvailable && !bookingConfirmed ? "pointer" : "not-allowed",
                 borderRadius: "5px",
                 fontSize: "16px",
               }}
-              disabled={!seat.isAvailable}
+              disabled={!seat.isAvailable || bookingConfirmed}
               onClick={() => handleSeatSelect(seat)}
             >
               {seat.seatNumber}
@@ -58,8 +69,7 @@ export default function SeatSelection({ flightId }) {
         )}
       </div>
 
-      {/* Confirm Button */}
-      {selectedSeat && (
+      {selectedSeat && !bookingConfirmed && (
         <button
           style={{
             marginTop: "20px",
@@ -71,7 +81,7 @@ export default function SeatSelection({ flightId }) {
             borderRadius: "5px",
             fontSize: "18px",
           }}
-          onClick={() => alert(`Seat ${selectedSeat} Confirmed!`)}
+          onClick={handleConfirmSeat}
         >
           Confirm Seat
         </button>

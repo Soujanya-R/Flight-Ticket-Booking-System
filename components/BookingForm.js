@@ -1,39 +1,27 @@
-"use client";
-import { useState } from "react";
+const handleBooking = async () => {
+  if (!selectedSeat) {
+    setMessage("❌ Please select a seat.");
+    return;
+  }
 
-export default function BookingForm({ flightId }) {
-  const [selectedSeat, setSelectedSeat] = useState(null);
-  const [message, setMessage] = useState("");
+  console.log("🔹 Booking Flight ID:", flightId);
+  console.log("🔹 Selected Seat:", selectedSeat);
 
-  const handleBooking = async () => {
-    if (!selectedSeat) {
-      setMessage("❌ Please select a seat.");
-      return;
-    }
+  const response = await fetch("/api/bookFlight", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ flightId, seatId: selectedSeat }),  // 🔹 Fix key name
+  });
 
-    console.log("🔹 Booking Flight ID:", flightId);
-    console.log("🔹 Selected Seat:", selectedSeat);
+  const data = await response.json();
+  console.log("🔹 Booking Response:", data);
+  console.log("🔹 Redirecting to:", data.redirectUrl);
 
-    const response = await fetch("/api/bookFlight", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ flightId, seatNumber: selectedSeat }),
-    });
+  if (data.success) {
+    window.location.href = data.redirectUrl || "/confirm-booking";  // Ensure redirect
+  } else {
+    setMessage(`❌ ${data.error}`);
+  }
+  console.log("🔹 Redirecting to:", data.redirectUrl);
 
-    const data = await response.json();
-    console.log("🔹 Booking Response:", data);
-
-    setMessage(data.success ? "✅ Booking successful!" : `❌ ${data.error}`);
-  };
-
-  return (
-    <div className="p-4 border">
-      <p><strong>Flight ID:</strong> {flightId}</p>
-      <p><strong>Selected Seat:</strong> {selectedSeat || "None"}</p>
-      <button onClick={handleBooking} className="px-4 py-2 bg-blue-500 text-white rounded">
-        Confirm Booking
-      </button>
-      {message && <p className="mt-2">{message}</p>}
-    </div>
-  );
-}
+};

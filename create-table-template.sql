@@ -169,3 +169,5 @@ MODIFY COLUMN toLocation VARCHAR(50) NOT NULL;
 SELECT * FROM seats WHERE flightId = 1;
 show databases;
 DESCRIBE seats;
+desc seats;
+SELECT * FROM Booking WHERE customerId = 1;
