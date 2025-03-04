@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"  // Change this based on your database
+  url      = env("DATABASE_URL")
+}
+
+model Flight {
+  flightId      Int    @id @default(autoincrement())
+  flightNumber  String
+  departureTime DateTime
+  arrivalTime   DateTime
+  totalSeats    Int
+  fromLocation  String
+  toLocation    String
+  seats         Seat[]
+}
+
+model Seat {
+  seatId      Int     @id @default(autoincrement())
+  seatNumber  String
+  isAvailable Boolean
+  flight      Flight  @relation(fields: [flightId], references: [flightId])
+  flightId    Int
+}

@@ -171,3 +171,4 @@ show databases;
 DESCRIBE seats;
 desc seats;
 SELECT * FROM Booking WHERE customerId = 1;
+SELECT * FROM seats WHERE flightId = '1';
