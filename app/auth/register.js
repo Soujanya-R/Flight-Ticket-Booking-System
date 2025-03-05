@@ -1,10 +1,11 @@
 "use server";
-import db from "@/lib/db";
+import { getDatabase } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
 export async function registerUser(name, email, password) {
   try {
     // Hash password before storing
+    const db = await getDatabase();
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert into database

@@ -11,7 +11,7 @@ export default async function handler(req, res) {
         if (!session) {
             return res.status(401).json({ error: "Unauthorized" });
         }
-
+        console.log("🔹 Session Data:", session);
         const { flightId, seatId } = req.body;
         const customerId = session.user.id;  // Assuming session has user ID
 

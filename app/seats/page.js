@@ -8,53 +8,85 @@ export default function SeatsPage() {
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchSeats() {
+      if (!flightId) return;
+      setLoading(true);
       try {
         const response = await fetch(`/api/getSeats?flightId=${flightId}`);
         const data = await response.json();
-        console.log("Fetched seats:", JSON.stringify(data, null, 2)); // Debugging
-
+  
+        console.log("Fetched seats:", JSON.stringify(data, null, 2)); // ✅ Corrected placement
+  
         if (response.ok) {
-          // Ensure `isAvailable` is a boolean and `seatId` is correctly assigned
-          const formattedSeats = data.seats.map((seat, index) => ({
-            ...seat,
-            seatId: seat.seatId || `seat-${index}`, // Ensure unique IDs
-            isAvailable: !!seat.isAvailable, // Convert to boolean
-          }));
-          setSeats(formattedSeats);
+          setSeats(
+            data.seats.map((seat, index) => ({
+              ...seat,
+              seatId: seat.seatId || `seat-${index}`, 
+              isAvailable: !!seat.isAvailable,
+            }))
+          );
         } else {
           setError(data.error || "Could not fetch seat data");
         }
       } catch (err) {
         setError("Failed to fetch seats");
+      } finally {
+        setLoading(false);
       }
     }
-
-    if (flightId) fetchSeats();
+  
+    console.log("🔹 flightId from URL:", flightId);
+    fetchSeats();
   }, [flightId]);
+  
 
-  // Toggle seat selection
   const handleSeatSelect = (seatId) => {
     setSelectedSeats((prev) =>
       prev.includes(seatId) ? prev.filter((id) => id !== seatId) : [...prev, seatId]
     );
   };
 
-  // Confirm selection
-  const handleConfirmSelection = () => {
+  const handleConfirmSelection = async () => {
     if (selectedSeats.length === 0) {
       alert("Please select at least one seat.");
       return;
     }
-    alert(`Seats confirmed: ${selectedSeats.join(", ")}`);
+  
+    const bookingData = { flightId, selectedSeats };
+    console.log("🔹 Sending Booking Data:", JSON.stringify(bookingData, null, 2));
+  
+    try {
+      const response = await fetch("/api/bookSeats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingData),
+      });
+  
+      const result = await response.json();
+      console.log("🔹 Server Response:", result);
+  
+      if (response.ok) {
+        alert("Booking successful!");
+      } else {
+        alert(`Booking failed: ${result.error || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("❌ Error while booking:", error);
+      alert("Booking failed. Please try again.");
+    }
   };
+  
+  
 
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Select Your Seat</h1>
-      {error ? (
+      {loading ? (
+        <p className="text-gray-500">Loading seats...</p>
+      ) : error ? (
         <p className="text-red-500">{error}</p>
       ) : (
         <>
@@ -65,18 +97,18 @@ export default function SeatsPage() {
                 className={`p-4 border rounded-lg transition ${
                   seat.isAvailable
                     ? selectedSeats.includes(seat.seatId)
-                      ? "bg-blue-500 text-white" // Selected seat
-                      : "bg-green-500 text-white hover:bg-green-600" // Available seat
-                    : "bg-gray-400 text-gray-700 cursor-not-allowed" // Unavailable seat
+                      ? "bg-blue-500 text-white"
+                      : "bg-green-500 text-white hover:bg-green-600"
+                    : "bg-gray-400 text-gray-700 cursor-not-allowed"
                 }`}
                 disabled={!seat.isAvailable}
                 onClick={() => seat.isAvailable && handleSeatSelect(seat.seatId)}
               >
-                {seat.seatNumber || seat.seatId} {/* Ensure something is displayed */}
+                {seat.seatNumber || seat.seatId}
               </button>
             ))}
           </div>
-          {/* Confirm Selection Button */}
+
           <button
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
             onClick={handleConfirmSelection}

@@ -11,7 +11,7 @@ export async function GET(req) {
 
   try {
     const db = await getDatabase();
-    const [bookings] = await db.query("SELECT * FROM Booking WHERE customerId = ?", [session.user.id]);
+    const [bookings] = await db.query("SELECT * FROM Booking WHERE customerId = ?", [session.userId]);
 
     const enrichedBookings = await Promise.all(
       bookings.map(async (booking) => {

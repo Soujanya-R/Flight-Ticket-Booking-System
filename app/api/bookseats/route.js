@@ -1,31 +1,38 @@
-import { NextResponse } from "next/server";
-import db from "@/lib/db"; // Adjust this based on your DB connection
+import { getDatabase } from "@/lib/db";
 
 export async function POST(req) {
   try {
-    const { flightId, selectedSeats } = await req.json();
-    console.log("📩 Received booking request:", { flightId, selectedSeats }); // ✅ Debug
+    const { flightId, selectedSeats } = await req.json(); // ✅ Extract correctly
 
-    if (!flightId || !selectedSeats.length) {
-      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+    console.log("🔹 API received:", { flightId, selectedSeats });
+
+    if (!flightId || !selectedSeats || selectedSeats.length === 0) {
+      console.error("❌ Missing flightId or selectedSeats");
+      return new Response(JSON.stringify({ success: false, error: "Missing required fields" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // Check if seats exist before updating (Optional)
-    const existingSeats = await db.seats.findMany({
-      where: { flightId, seatId: { in: selectedSeats } },
-    });
-    console.log("🔎 Found existing seats:", existingSeats); // ✅ Debug
+    const db = await getDatabase();
+    const bookingsCollection = db.collection("bookings");
 
-    // Update database (Example using Prisma)
-    const updatedSeats = await db.seats.updateMany({
-      where: { flightId, seatId: { in: selectedSeats }, isAvailable: true },
-      data: { isAvailable: false },
-    });
+    await bookingsCollection.insertMany(
+      selectedSeats.map((seatId) => ({ flightId, seatId }))
+    );
 
-    console.log("✅ Seats booked:", updatedSeats); // ✅ Debug
-    return NextResponse.json({ success: true, updatedSeats });
+    console.log("✅ Booking confirmed!");
+    return new Response(JSON.stringify({
+      success: true,
+      message: "Booking successful!",
+      redirectUrl: "/confirm-booking",
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+
   } catch (error) {
-    console.error("❌ Booking error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("❌ Database Error:", error);
+    return new Response(JSON.stringify({ success: false, error: "Database error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

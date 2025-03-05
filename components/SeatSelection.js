@@ -26,16 +26,40 @@ export default function SeatSelection({ flightId }) {
   const handleSeatSelect = (seat) => {
     if (seat.isAvailable && !bookingConfirmed) {
       setSelectedSeat(seat.seatId);
+      console.log("🔹 Selected Seat ID:", seat.seatId);
+
     }
   };
 
-  const handleConfirmSeat = () => {
-    if (selectedSeat) {
-      alert(`Seat ${selectedSeat} Confirmed!`);
-      setBookingConfirmed(true);
-      router.push(`/confirm-booking?flightId=${flightId}&seatId=${selectedSeat}`);
+  const handleConfirmSeat = async () => {
+    if (!selectedSeat) return;
+  
+    console.log("🔹 Booking Data Sent:", { flightId, seatId: selectedSeat });
+  
+    try {
+      const response = await fetch("/api/bookFlight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flightId, seatId: selectedSeat }),
+      });
+  
+      const data = await response.json();
+      console.log("🎟️ Booking Response:", data);
+  
+      if (data.success) {
+        alert(`Seat ${selectedSeat} booked successfully!`);
+        setBookingConfirmed(true);
+        router.push(data.redirectUrl);
+      } else {
+        alert(`❌ Booking failed: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("❌ Booking error:", error);
+      alert("An error occurred while booking.");
     }
   };
+  
+  
 
   return (
     <div>
