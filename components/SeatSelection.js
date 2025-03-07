@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 export default function SeatSelection({ flightId }) {
   const [seats, setSeats] = useState([]);
   const [selectedSeat, setSelectedSeat] = useState(null);
-  const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -24,32 +23,33 @@ export default function SeatSelection({ flightId }) {
   }, [flightId]);
 
   const handleSeatSelect = (seat) => {
-    if (seat.isAvailable && !bookingConfirmed) {
+    if (seat.isAvailable) {
       setSelectedSeat(seat.seatId);
       console.log("🔹 Selected Seat ID:", seat.seatId);
-
     }
   };
 
   const handleConfirmSeat = async () => {
     if (!selectedSeat) return;
-  
+
     console.log("🔹 Booking Data Sent:", { flightId, seatId: selectedSeat });
-  
+
     try {
       const response = await fetch("/api/bookFlight", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ flightId, seatId: selectedSeat }),
       });
-  
+
       const data = await response.json();
       console.log("🎟️ Booking Response:", data);
-  
+
       if (data.success) {
-        alert(`Seat ${selectedSeat} booked successfully!`);
-        setBookingConfirmed(true);
-        router.push(data.redirectUrl);
+        setSeats((prevSeats) =>
+          prevSeats.map((seat) =>
+            seat.seatId === selectedSeat ? { ...seat, isAvailable: false } : seat
+          )
+        );
       } else {
         alert(`❌ Booking failed: ${data.error}`);
       }
@@ -58,8 +58,6 @@ export default function SeatSelection({ flightId }) {
       alert("An error occurred while booking.");
     }
   };
-  
-  
 
   return (
     <div>
@@ -71,18 +69,18 @@ export default function SeatSelection({ flightId }) {
               key={seat.seatId}
               style={{
                 padding: "10px",
-                backgroundColor: seat.isAvailable
-                  ? selectedSeat === seat.seatId
-                    ? "blue"
-                    : "green"
-                  : "gray",
+                backgroundColor: !seat.isAvailable
+                  ? "gray"
+                  : selectedSeat === seat.seatId
+                  ? "blue"
+                  : "green",
                 color: "white",
                 border: "none",
-                cursor: seat.isAvailable && !bookingConfirmed ? "pointer" : "not-allowed",
+                cursor: seat.isAvailable ? "pointer" : "not-allowed",
                 borderRadius: "5px",
                 fontSize: "16px",
               }}
-              disabled={!seat.isAvailable || bookingConfirmed}
+              disabled={!seat.isAvailable}
               onClick={() => handleSeatSelect(seat)}
             >
               {seat.seatNumber}
@@ -93,7 +91,7 @@ export default function SeatSelection({ flightId }) {
         )}
       </div>
 
-      {selectedSeat && !bookingConfirmed && (
+      {selectedSeat && (
         <button
           style={{
             marginTop: "20px",
@@ -113,3 +111,7 @@ export default function SeatSelection({ flightId }) {
     </div>
   );
 }
+// Compare this snippet from app/confirm-booking/page.js:
+// import { getDatabase } from "@/lib/db";  // Import the database connection
+// import { getServerSession } from "next-auth/server";  // Import the server session utility
+//  

@@ -22,10 +22,26 @@ export async function POST(req) {
     });
 
     // Book the seat
-    const [result] = await db.execute(
-      "UPDATE seats SET isAvailable = 0 WHERE flightId = ? AND seatId = ?",
-      [flightId, seatId]
-    );
+   // Check if the seat is already booked
+const [seatCheck] = await db.execute(
+  "SELECT isAvailable FROM seats WHERE flightId = ? AND seatId = ?",
+  [flightId, seatId]
+);
+
+if (!seatCheck.length || seatCheck[0].isAvailable === 0) {
+  console.error("❌ Seat is already booked!");
+  return new Response(JSON.stringify({ success: false, error: "Seat is already booked!" }), {
+    status: 400,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+// Proceed with booking
+const [result] = await db.execute(
+  "UPDATE seats SET isAvailable = 0 WHERE flightId = ? AND seatId = ?",
+  [flightId, seatId]
+);
+
 
     console.log("✅ Booking confirmed!", result);
 

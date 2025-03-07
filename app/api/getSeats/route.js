@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import mysql from "mysql2/promise";
 
-const db = mysql.createPool({
+const pool = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "0000",
@@ -14,16 +13,29 @@ export async function GET(req) {
     const flightId = url.searchParams.get("flightId");
 
     if (!flightId) {
-      return NextResponse.json({ error: "Flight ID is required" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "Flight ID is required" }), {
+        status: 400,
+      });
     }
 
-    const [rows] = await db.query(
+    // Query to get seat data
+    const [rows] = await pool.query(
       "SELECT seatId, seatNumber, isAvailable FROM seats WHERE flightId = ?",
       [flightId]
     );
 
-    return NextResponse.json({ seats: rows });
+    const seats = rows.map((seat) => ({
+      ...seat,
+      isAvailable: seat.isAvailable === 1, // Ensure correct boolean conversion
+    }));
+
+    console.log("Seats Data from DB:", seats);
+
+    return new Response(JSON.stringify({ seats }), { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error fetching seats:", error);
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+    });
   }
 }

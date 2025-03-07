@@ -174,3 +174,36 @@ SELECT * FROM Booking WHERE customerId = 1;
 SELECT * FROM seats WHERE flightId = '1';
 show databases;
 DESC booking;
+SELECT * FROM booking;
+SHOW TABLES;
+SELECT DATABASE();
+USE flight_booking;
+DELETE FROM booking;
+SELECT * FROM customer WHERE customerId = 4;
+INSERT INTO customer (customerId, name, email) VALUES (4, 'Test User', 'test@example.com');
+ALTER TABLE booking ADD COLUMN selectedSeats TEXT;
+select * from seats;
+SELECT seatId, COUNT(*) FROM Booking GROUP BY seatId HAVING COUNT(*) > 1;
+use flight_booking;
+SHOW COLUMNS FROM Booking;
+SELECT selectedSeats, COUNT(*) FROM Booking GROUP BY selectedSeats HAVING COUNT(*) > 1;
+SELECT selectedSeats, COUNT(*) 
+FROM Booking 
+WHERE selectedSeats IS NOT NULL 
+GROUP BY selectedSeats 
+HAVING COUNT(*) > 1;
+UPDATE Booking 
+SET selectedSeats = 'A1' 
+WHERE bookingId = 29;
+SELECT * FROM Booking;
+SHOW CREATE TABLE Booking;
+ALTER TABLE Booking MODIFY selectedSeats TEXT;
+INSERT INTO Booking (customerId, flightId, bookingDate, selectedSeats)
+VALUES (4, 5, '2025-03-06', '[23, 20, 21]');
+ALTER TABLE Booking ADD CONSTRAINT unique_booking UNIQUE (customerId, flightId, selectedSeats);
+ALTER TABLE Booking 
+MODIFY selectedSeats VARCHAR(255);
+ALTER TABLE Booking 
+ADD CONSTRAINT unique_booking UNIQUE (customerId, flightId, selectedSeats);
+ALTER TABLE Booking 
+MODIFY COLUMN selectedSeats VARCHAR(255);

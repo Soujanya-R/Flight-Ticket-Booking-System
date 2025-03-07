@@ -1,38 +1,42 @@
-import { getDatabase } from "@/lib/db";
+import mysql from "mysql2/promise";
+
+const db = await mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "0000",
+  database: "flight_booking",
+});
 
 export async function POST(req) {
   try {
-    const { flightId, selectedSeats } = await req.json(); // ✅ Extract correctly
+    const { flightId, selectedSeats } = await req.json();
+    const customerId = req.session?.user?.id || 4; // Ensure correct user ID retrieval
 
-    console.log("🔹 API received:", { flightId, selectedSeats });
+    console.log("Received Booking Data:", { customerId, flightId, selectedSeats });
 
-    if (!flightId || !selectedSeats || selectedSeats.length === 0) {
-      console.error("❌ Missing flightId or selectedSeats");
-      return new Response(JSON.stringify({ success: false, error: "Missing required fields" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    if (!customerId || !flightId || !selectedSeats) {
+      return Response.json({ error: "Missing customerId, flightId, or seats" }, { status: 400 });
     }
 
-    const db = await getDatabase();
-    const bookingsCollection = db.collection("bookings");
-
-    await bookingsCollection.insertMany(
-      selectedSeats.map((seatId) => ({ flightId, seatId }))
+    // 🔹 Check if the seat is already booked
+    const [existingBooking] = await db.query(
+      "SELECT * FROM booking WHERE customerId = ? AND flightId = ? AND selectedSeats = ?",
+      [customerId, flightId, JSON.stringify(selectedSeats)]
     );
 
-    console.log("✅ Booking confirmed!");
-    return new Response(JSON.stringify({
-      success: true,
-      message: "Booking successful!",
-      redirectUrl: "/confirm-booking",
-    }), { status: 200, headers: { "Content-Type": "application/json" } });
+    if (existingBooking.length > 0) {
+      return Response.json({ error: "Seat already booked!" }, { status: 400 });
+    }
 
+    // 🔹 Insert only if no duplicate exists
+    await db.query(
+      "INSERT INTO booking (customerId, flightId, bookingDate, selectedSeats) VALUES (?, ?, ?, ?)",
+      [customerId, flightId, new Date(), JSON.stringify(selectedSeats)]
+    );
+
+    return Response.json({ success: true });
   } catch (error) {
-    console.error("❌ Database Error:", error);
-    return new Response(JSON.stringify({ success: false, error: "Database error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("Booking Error:", error);
+    return Response.json({ error: "Server error" }, { status: 500 });
   }
 }

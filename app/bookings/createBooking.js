@@ -20,10 +20,11 @@ export default async function handler(req, res) {
         await db.query("START TRANSACTION");
 
         // Insert Booking into DB
-        const [bookingResult] = await db.query(
-            "INSERT INTO Booking (customerId, flightId, seatId, bookingDate) VALUES (?, ?, ?, NOW())",
-            [customerId, flightId, seatId]
-        );
+        const query = `
+        INSERT INTO Booking (customerId, flightId, bookingDate, selectedSeats) 
+        VALUES (?, ?, ?, ?)`;
+    const values = [customerId, flightId, new Date(), JSON.stringify(selectedSeats)];
+    
 
         if (!bookingResult.insertId) {
             throw new Error("Failed to insert booking.");

@@ -4,41 +4,46 @@ import { useState } from "react";
 export default function BookingForm({ flightId }) {
   const [selectedSeat, setSelectedSeat] = useState(null);
   const [message, setMessage] = useState("");
+  const [isBooking, setIsBooking] = useState(false); // Prevent multiple clicks
 
-  // Move this outside handleBooking
   const handleSeatSelect = (seat) => {
     console.log("🔹 Seat selected:", seat);
     setSelectedSeat(seat);
   };
 
   const handleBooking = async () => {
-    console.log("🔹 handleBooking triggered!");
-
+    if (isBooking) return; // Prevent duplicate clicks
     if (!selectedSeat) {
       setMessage("❌ Please select a seat.");
-      console.log("🔹 No seat selected, aborting...");
       return;
     }
 
-    console.log("🔹 Booking Flight ID:", flightId);
-    console.log("🔹 Selected Seat:", selectedSeat);
+    setIsBooking(true); // Disable button
 
-    const response = await fetch("/api/bookFlight", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ flightId, seatId: selectedSeat }),
-    });
+    try {
+      console.log("🔹 Booking Flight ID:", flightId);
+      console.log("🔹 Selected Seat:", selectedSeat);
 
-    const data = await response.json();
-    console.log("🔹 Booking Response:", data);
+      const response = await fetch("/api/bookSeats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flightId, selectedSeats: [selectedSeat] }),
+      });
 
-    if (data.success) {
-      setMessage("✅ Booking successful!");
-      console.log("🔹 Redirecting to:", data.redirectUrl);
-      window.location.href = data.redirectUrl || "/confirm-booking";
-    } else {
-      setMessage(`❌ ${data.error}`);
-      console.error("🔹 Booking failed:", data.error);
+      const data = await response.json();
+      console.log("🔹 Booking Response:", data);
+
+      if (data.success) {
+        setMessage("✅ Booking successful!");
+        setTimeout(() => (window.location.href = "/confirm-booking"), 1000);
+      } else {
+        setMessage(`❌ ${data.error}`);
+      }
+    } catch (error) {
+      setMessage("❌ Booking failed.");
+      console.error("🔹 Error:", error);
+    } finally {
+      setIsBooking(false); // Re-enable button
     }
   };
 
@@ -47,7 +52,6 @@ export default function BookingForm({ flightId }) {
       <p><strong>Flight ID:</strong> {flightId}</p>
       <p><strong>Selected Seat:</strong> {selectedSeat || "None"}</p>
 
-      {/* Seat selection buttons (Example: Seats 1A, 1B, 1C) */}
       <div className="flex space-x-2 my-2">
         {["1A", "1B", "1C"].map((seat) => (
           <button
@@ -64,9 +68,10 @@ export default function BookingForm({ flightId }) {
 
       <button
         onClick={handleBooking}
-        className="px-4 py-2 bg-blue-500 text-white rounded"
+        disabled={isBooking}
+        className={`px-4 py-2 rounded ${isBooking ? "bg-gray-400" : "bg-blue-500 text-white"}`}
       >
-        Confirm Booking
+        {isBooking ? "Booking..." : "Confirm Booking"}
       </button>
 
       {message && <p className="mt-2">{message}</p>}
