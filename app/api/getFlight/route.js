@@ -7,24 +7,26 @@ export async function GET(req) {
 
     if (!flightId) {
       console.error("❌ Flight ID is missing in request.");
-      return new Response(JSON.stringify({ error: "Flight ID is required", flight: null }), { status: 400 });
+      return Response.json({ error: "Flight ID is required", flight: null });
     }
 
     console.log("🔹 Fetching flight details for ID:", flightId);
 
-    const db = await getDatabase();
-    const [flights] = await db.execute("SELECT * FROM Flight WHERE flightId = ?", [flightId]);
+    const db = await getDatabase(); // Fix: Call getDatabase() to get a connection
+    const [flights] = await db.execute(
+      "SELECT * FROM Flight WHERE flightId = ?",
+      [flightId]
+    );
 
     if (flights.length === 0) {
       console.log("❌ No flight found for ID:", flightId);
-      return new Response(JSON.stringify({ error: "Flight not found", flight: null }), { status: 404 });
+      return Response.json({ error: "Flight not found", flight: null });
     }
 
     console.log("✅ Flight found:", flights[0]);
-
-    return new Response(JSON.stringify({ flight: flights[0] }), { status: 200 });
+    return Response.json({ flight: flights[0] });
   } catch (error) {
     console.error("❌ Error fetching flight:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error", flight: null }), { status: 500 });
+    return Response.json({ error: "Internal Server Error", flight: null });
   }
 }

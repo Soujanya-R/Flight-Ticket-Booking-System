@@ -16,20 +16,20 @@ export default function SeatsPage() {
     async function fetchFlightData() {
       if (!flightId) return;
       setLoading(true);
-    
+
       try {
         const response = await fetch(`/api/getFlight?flightId=${flightId}`);
-        
+
         if (!response.ok) {
           throw new Error(`API Error: ${response.status} ${response.statusText}`);
         }
-    
+
         // ✅ Check if response is empty
         const textData = await response.text();
         if (!textData) {
           throw new Error("Received empty response from server.");
         }
-    
+
         // ✅ Parse JSON safely
         let data;
         try {
@@ -37,33 +37,33 @@ export default function SeatsPage() {
         } catch (jsonError) {
           throw new Error("Invalid JSON response from server.");
         }
-    
+
         console.log("Flight API Response:", data);
-    
+
         if (data.flight) {
           setFlightDetails(data.flight);
-    
+
           // Fetch seats
           const seatResponse = await fetch(`/api/getSeats?flightId=${flightId}`);
-          
+
           if (!seatResponse.ok) {
             throw new Error(`Seat API Error: ${seatResponse.status} ${seatResponse.statusText}`);
           }
-    
+
           const seatTextData = await seatResponse.text();
           if (!seatTextData) {
             throw new Error("Received empty seat response from server.");
           }
-    
+
           let seatData;
           try {
             seatData = JSON.parse(seatTextData);
           } catch (jsonError) {
             throw new Error("Invalid JSON response from seats API.");
           }
-    
+
           console.log("Seats API Response:", seatData);
-    
+
           if (seatData.seats) {
             setSeats(seatData.seats);
           } else {
@@ -79,13 +79,13 @@ export default function SeatsPage() {
         setLoading(false);
       }
     }
-    
-  
+
+
     fetchFlightData();
   }, [flightId]);
-  
-  
-  
+
+
+
   const handleSeatSelect = (seatId) => {
     setSelectedSeats((prev) =>
       prev.includes(seatId) ? prev.filter((id) => id !== seatId) : [...prev, seatId]
@@ -143,44 +143,55 @@ export default function SeatsPage() {
         <>
           {flightDetails && (
             <div className="w-full max-w-3xl bg-white text-black p-6 rounded-lg shadow-lg mb-6">
-             <h2 className="text-2xl font-bold mb-2">{flightDetails.flightNumber}</h2>
-<p className="text-lg">
-  <span className="font-semibold">From:</span> {flightDetails?.fromLocation ?? "Loading..."} -{" "}
-  <span className="font-semibold">To:</span> {flightDetails?.toLocation ?? "Loading..."}
-</p>
-
-
+              <h2 className="text-2xl font-bold ">Flight Details :</h2>
               <p className="text-lg">
+                <span className="font-semibold">From:</span> {flightDetails?.fromLocation ?? "Loading..."}  </p>
+                <p className="text-lg"> <span>
+                  <span className="font-semibold">To:</span> {flightDetails?.toLocation ?? "Loading..."}
+                </span>
+                </p>
+            
+
+
+              {/* <p className="text-lg">
                 <span className="font-semibold">Duration:</span> {flightDetails.duration}
+              </p> */}
+               <p className="text-lg">
+                <span className="font-semibold">Flight ID:</span> {flightDetails.flightNumber}
               </p>
-              <p className="text-lg">
-                <span className="font-semibold">Flight Number:</span> {flightDetails.flightNumber}
-              </p>
+              <div className="text-lg">
+                <p>
+                  <span className="font-semibold">Departure Time:</span> {flightDetails?.departureTime ?? "Loading..."}
+                </p>
+                <p>
+                  <span className="font-semibold">Arrival Time:</span> {flightDetails?.arrivalTime  ??  "Loading..."}
+                </p>
+              </div>
+
             </div>
           )}
-<div className="grid grid-cols-4 gap-4 bg-white p-6 rounded-lg shadow-2xl">
-  {seats.length > 0 ? (
-    seats.map((seat) => (
-      <motion.button
-        key={seat.seatId}
-        whileTap={{ scale: 0.9 }}
-        className={`p-4 border rounded-lg text-lg font-semibold transition transform hover:scale-105 duration-200 shadow-md ${
-          !seat.isAvailable
-            ? "bg-gray-500 text-gray-800 cursor-not-allowed opacity-70"
-            : selectedSeats.includes(seat.seatId)
-            ? "bg-yellow-500 text-white hover:bg-yellow-600"
-            : "bg-green-500 text-white hover:bg-green-600"
-        }`}
-        disabled={!seat.isAvailable}
-        onClick={() => seat.isAvailable && handleSeatSelect(seat.seatId)}
-      >
-        {seat.seatNumber || seat.seatId}
-      </motion.button>
-    ))
-  ) : (
-    <p className="text-red-500 text-lg font-semibold">No seats available</p>
-  )}
-</div>
+          <div className="grid grid-cols-4 gap-4 bg-white p-6 rounded-lg shadow-2xl">
+            {seats.length > 0 ? (
+              seats.map((seat) => (
+                <motion.button
+                  key={seat.seatId}
+                  whileTap={{ scale: 0.9 }}
+                  className={`p-4 border rounded-lg text-lg font-semibold transition transform hover:scale-105 duration-200 shadow-md ${!seat.isAvailable
+                      ? "bg-gray-500 text-gray-800 cursor-not-allowed opacity-70"
+                      : selectedSeats.includes(seat.seatId)
+                        ? "bg-yellow-500 text-white hover:bg-yellow-600"
+                        : "bg-green-500 text-white hover:bg-green-600"
+                    }`}
+                  disabled={!seat.isAvailable}
+                  onClick={() => seat.isAvailable && handleSeatSelect(seat.seatId)}
+                >
+                  {seat.seatNumber || seat.seatId}
+                </motion.button>
+              ))
+            ) : (
+              <p className="text-red-500 text-lg font-semibold">No seats available</p>
+            )}
+          </div>
 
 
           <motion.button
