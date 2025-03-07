@@ -1,64 +1,45 @@
 import mysql from "mysql2/promise";
 
+const pool = mysql.createPool({
+  host: "localhost",
+  user: "root",
+  password: "0000",
+  database: "flight_booking",
+});
+
 export async function POST(req) {
   try {
     const { flightId, seatId } = await req.json();
-    console.log("🔹 API received:", { flightId, seatId });
 
     if (!flightId || !seatId) {
-      console.error("❌ Missing flightId or seatId");
-      return new Response(JSON.stringify({ success: false, error: "Missing required fields" }), {
+      return new Response(JSON.stringify({ error: "Flight ID and Seat ID are required" }), {
         status: 400,
-        headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Establish DB connection inside function
-    const db = await mysql.createConnection({
-      host: "localhost",
-      user: "root",
-      password: "0000",
-      database: "flight_booking",
-    });
+    // ✅ Step 1: Check if the seat is available
+    const [rows] = await pool.query(
+      "SELECT isAvailable FROM seats WHERE seatId = ? AND flightId = ?",
+      [seatId, flightId]
+    );
 
-    // Book the seat
-   // Check if the seat is already booked
-const [seatCheck] = await db.execute(
-  "SELECT isAvailable FROM seats WHERE flightId = ? AND seatId = ?",
-  [flightId, seatId]
-);
+    if (rows.length === 0 || rows[0].isAvailable === 0) {
+      return new Response(JSON.stringify({ error: "Seat is not available" }), { status: 400 });
+    }
 
-if (!seatCheck.length || seatCheck[0].isAvailable === 0) {
-  console.error("❌ Seat is already booked!");
-  return new Response(JSON.stringify({ success: false, error: "Seat is already booked!" }), {
-    status: 400,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+    // ✅ Step 2: Update the seat to mark it as booked
+    await pool.query(
+      "UPDATE seats SET isAvailable = 0 WHERE seatId = ? AND flightId = ?",
+      [seatId, flightId]
+    );
 
-// Proceed with booking
-const [result] = await db.execute(
-  "UPDATE seats SET isAvailable = 0 WHERE flightId = ? AND seatId = ?",
-  [flightId, seatId]
-);
-
-
-    console.log("✅ Booking confirmed!", result);
-
-    return new Response(JSON.stringify({
-      success: true,
-      message: "Booking successful!",
-      redirectUrl: "/confirm-booking",
-    }), {
+    return new Response(JSON.stringify({ success: true, message: "Seat booked successfully" }), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
     });
-
   } catch (error) {
-    console.error("❌ Database Error:", error);
-    return new Response(JSON.stringify({ success: false, error: "Database error" }), {
+    console.error("Error booking seat:", error);
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
     });
   }
 }

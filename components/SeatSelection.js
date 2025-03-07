@@ -12,6 +12,7 @@ export default function SeatSelection({ flightId }) {
         const response = await fetch(`/api/getSeats?flightId=${flightId}`);
         const data = await response.json();
         console.log("🛫 Seats Data:", data);
+        console.log("API Response:", data);
 
         setSeats(data.seats || []);
       } catch (error) {
@@ -26,6 +27,8 @@ export default function SeatSelection({ flightId }) {
     if (seat.isAvailable) {
       setSelectedSeat(seat.seatId);
       console.log("🔹 Selected Seat ID:", seat.seatId);
+      console.log("Seat Data:", seats);
+
     }
   };
 
@@ -111,7 +114,3 @@ export default function SeatSelection({ flightId }) {
     </div>
   );
 }
-// Compare this snippet from app/confirm-booking/page.js:
-// import { getDatabase } from "@/lib/db";  // Import the database connection
-// import { getServerSession } from "next-auth/server";  // Import the server session utility
-//  

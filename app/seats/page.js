@@ -17,17 +17,18 @@ export default function SeatsPage() {
       try {
         const response = await fetch(`/api/getSeats?flightId=${flightId}`);
         const data = await response.json();
-  
+        console.log("API Response:", data);
         console.log("Fetched seats:", JSON.stringify(data, null, 2)); // ✅ Corrected placement
   
         if (response.ok) {
           setSeats(
+            
             data.seats.map((seat, index) => ({
               ...seat,
               seatId: seat.seatId || `seat-${index}`, 
               isAvailable: !!seat.isAvailable,
             }))
-          );
+          );console.log("Seat Data:", seats);
         } else {
           setError(data.error || "Could not fetch seat data");
         }
@@ -115,6 +116,7 @@ export default function SeatsPage() {
           >
             Confirm Selection
           </button>
+          
         </>
       )}
     </div>

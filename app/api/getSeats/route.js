@@ -26,8 +26,9 @@ export async function GET(req) {
 
     const seats = rows.map((seat) => ({
       ...seat,
-      isAvailable: seat.isAvailable === 1, // Ensure correct boolean conversion
+      isAvailable: seat.isAvailable === 1, // Ensure boolean conversion
     }));
+    
 
     console.log("Seats Data from DB:", seats);
 
