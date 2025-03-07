@@ -8,35 +8,17 @@ const pool = mysql.createPool({
 });
 
 export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const flightId = searchParams.get("flightId");
+
+  if (!flightId) {
+    return Response.json({ error: "Flight ID is required" }, { status: 400 });
+  }
+
   try {
-    const url = new URL(req.url);
-    const flightId = url.searchParams.get("flightId");
-
-    if (!flightId) {
-      return new Response(JSON.stringify({ error: "Flight ID is required" }), {
-        status: 400,
-      });
-    }
-
-    // Query to get seat data
-    const [rows] = await pool.query(
-      "SELECT seatId, seatNumber, isAvailable FROM seats WHERE flightId = ?",
-      [flightId]
-    );
-
-    const seats = rows.map((seat) => ({
-      ...seat,
-      isAvailable: seat.isAvailable === 1, // Ensure boolean conversion
-    }));
-    
-
-    console.log("Seats Data from DB:", seats);
-
-    return new Response(JSON.stringify({ seats }), { status: 200 });
+    const seats = await getSeatsFromDatabase(flightId); // Fetch seats
+    return Response.json({ seats }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching seats:", error);
-    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
-      status: 500,
-    });
+    return Response.json({ error: "Failed to fetch seats" }, { status: 500 });
   }
 }

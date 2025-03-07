@@ -207,5 +207,24 @@ ALTER TABLE Booking
 ADD CONSTRAINT unique_booking UNIQUE (customerId, flightId, selectedSeats);
 ALTER TABLE Booking 
 MODIFY COLUMN selectedSeats VARCHAR(255);
+
+insert into flight values(1, 'Al201', '2025-03-06 10:00:00', '2025-03-07 12:00:00', 150, 'BOM', 'BLR');
+insert into flight values(6, 'Al202', '2025-03-07 10:00:00', '2025-03-08 12:00:00', 10, 'BOM', 'BLR');
+UPDATE flight
+SET departureTime = '2025-02-25 12:00:00', arrivalTime = '2025-02-26 1:00:00'
+WHERE flightId = 1;
+
+insert into seats values(1, 1, '1A', TRUE, NULL);
+insert into seats values(2, 1, '1B', TRUE, NULL),(5, 1, '1C', TRUE, NULL),(6, 1, '1D', False, NULL);
+insert into seats values(7, 6, '1A', TRUE, NULL),(24, 6, '1B', TRUE, NULL),(25, 6, '1C', TRUE, NULL),(26, 6, '1D', False, NULL);
+
 DELETE FROM booking;
 SELECT * FROM Booking;
+
+
+show tables;
+select * from booking;
+select * from customer;
+select * from flight;
+select * from seats;
+SELECT * FROM users;
