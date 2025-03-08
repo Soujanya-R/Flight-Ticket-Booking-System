@@ -54,7 +54,7 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="absolute top-full left-0 w-full bg-blue-700 text-white flex flex-col items-center py-4 space-y-4 md:hidden">
-          {["/flights", "/About", "/ContactUs", "/register", "/login"].map((href, index) => (
+          {["/pilot-mode", "/About", "/ContactUs", "/register", "/login"].map((href, index) => (
             <Link
               key={href}
               href={href}

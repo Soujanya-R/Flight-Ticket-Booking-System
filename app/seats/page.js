@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export default function SeatsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const flightId = searchParams.get("flightId");
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -19,49 +21,23 @@ export default function SeatsPage() {
 
       try {
         const response = await fetch(`/api/getFlight?flightId=${flightId}`);
+        if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
 
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status} ${response.statusText}`);
-        }
-
-        // ✅ Check if response is empty
         const textData = await response.text();
-        if (!textData) {
-          throw new Error("Received empty response from server.");
-        }
+        if (!textData) throw new Error("Received empty response from server.");
 
-        // ✅ Parse JSON safely
-        let data;
-        try {
-          data = JSON.parse(textData);
-        } catch (jsonError) {
-          throw new Error("Invalid JSON response from server.");
-        }
-
+        const data = JSON.parse(textData);
         console.log("Flight API Response:", data);
 
         if (data.flight) {
           setFlightDetails(data.flight);
-
-          // Fetch seats
           const seatResponse = await fetch(`/api/getSeats?flightId=${flightId}`);
-
-          if (!seatResponse.ok) {
-            throw new Error(`Seat API Error: ${seatResponse.status} ${seatResponse.statusText}`);
-          }
+          if (!seatResponse.ok) throw new Error(`Seat API Error: ${seatResponse.status} ${seatResponse.statusText}`);
 
           const seatTextData = await seatResponse.text();
-          if (!seatTextData) {
-            throw new Error("Received empty seat response from server.");
-          }
+          if (!seatTextData) throw new Error("Received empty seat response from server.");
 
-          let seatData;
-          try {
-            seatData = JSON.parse(seatTextData);
-          } catch (jsonError) {
-            throw new Error("Invalid JSON response from seats API.");
-          }
-
+          const seatData = JSON.parse(seatTextData);
           console.log("Seats API Response:", seatData);
 
           if (seatData.seats) {
@@ -80,11 +56,8 @@ export default function SeatsPage() {
       }
     }
 
-
     fetchFlightData();
   }, [flightId]);
-
-
 
   const handleSeatSelect = (seatId) => {
     setSelectedSeats((prev) =>
@@ -117,6 +90,7 @@ export default function SeatsPage() {
           )
         );
         setSelectedSeats([]);
+        router.push("/dashboard");
       } else {
         alert(`Booking failed: ${result.error || "Unknown error"}`);
       }
@@ -134,7 +108,6 @@ export default function SeatsPage() {
       className="p-8 flex flex-col items-center min-h-screen bg-gradient-to-br from-blue-800 to-indigo-500 text-white"
     >
       <h1 className="text-4xl pt-20 font-extrabold mb-8 shadow-lg">Select Your Seat</h1>
-
       {loading ? (
         <p className="text-gray-300 animate-pulse">Loading data...</p>
       ) : error ? (
@@ -145,18 +118,12 @@ export default function SeatsPage() {
             <div className="w-full max-w-3xl bg-white text-black p-6 rounded-lg shadow-lg mb-6">
               <h2 className="text-2xl font-bold ">Flight Details :</h2>
               <p className="text-lg">
-                <span className="font-semibold">From:</span> {flightDetails?.fromLocation ?? "Loading..."}  </p>
-                <p className="text-lg"> <span>
-                  <span className="font-semibold">To:</span> {flightDetails?.toLocation ?? "Loading..."}
-                </span>
-                </p>
-            
-
-
-              {/* <p className="text-lg">
-                <span className="font-semibold">Duration:</span> {flightDetails.duration}
-              </p> */}
-               <p className="text-lg">
+                <span className="font-semibold">From:</span> {flightDetails?.fromLocation ?? "Loading..."}  
+              </p>
+              <p className="text-lg"> 
+                <span className="font-semibold">To:</span> {flightDetails?.toLocation ?? "Loading..."}
+              </p>
+              <p className="text-lg">
                 <span className="font-semibold">Flight ID:</span> {flightDetails.flightNumber}
               </p>
               <div className="text-lg">
@@ -167,7 +134,6 @@ export default function SeatsPage() {
                   <span className="font-semibold">Arrival Time:</span> {flightDetails?.arrivalTime  ??  "Loading..."}
                 </p>
               </div>
-
             </div>
           )}
           <div className="grid grid-cols-4 gap-4 bg-white p-6 rounded-lg shadow-2xl">
@@ -192,8 +158,6 @@ export default function SeatsPage() {
               <p className="text-red-500 text-lg font-semibold">No seats available</p>
             )}
           </div>
-
-
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
