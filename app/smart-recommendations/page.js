@@ -1,51 +1,49 @@
 "use client";
+import { useEffect, useState } from "react";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-
-export default function FlightRecommendations({ flights }) {
-  const [sortedFlights, setSortedFlights] = useState([]);
-  const [filter, setFilter] = useState("best");
+export default function FlightRecommendations() {
+  const [flights, setFlights] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (flights.length > 0) {
-      let sorted = [...flights];
-      if (filter === "cheapest") {
-        sorted.sort((a, b) => a.price - b.price);
-      } else if (filter === "fastest") {
-        sorted.sort((a, b) => a.duration - b.duration);
-      } else {
-        sorted.sort((a, b) => b.rating - a.rating);
+    const fetchRecommendations = async () => {
+      try {
+        const response = await fetch("/api/getRecommendedFlights");
+        
+        if (!response.ok) throw new Error("Failed to fetch flights");
+
+        const data = await response.json();
+        if (!data.flights || data.flights.length === 0) {
+          setError("No recommendations found.");
+        } else {
+          setFlights(data.flights);
+        }
+      } catch (err) {
+        console.error("❌ Fetch Error:", err);
+        setError("Could not fetch flight recommendations. Please try again.");
       }
-      setSortedFlights(sorted);
-    }
-  }, [flights, filter]);
+      setLoading(false);
+    };
+
+    fetchRecommendations();
+  }, []);
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white shadow-xl rounded-xl">
-      <h2 className="text-3xl font-bold text-gray-800 text-center">✈️ Recommended Flights</h2>
-      <div className="flex justify-center mt-4 space-x-4">
-        <button onClick={() => setFilter("cheapest")} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Cheapest</button>
-        <button onClick={() => setFilter("fastest")} className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Fastest</button>
-        <button onClick={() => setFilter("best")} className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600">Best Rated</button>
-      </div>
-      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {sortedFlights.map((flight, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="p-6 bg-gray-100 rounded-lg shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105"
-          >
-            <h3 className="text-xl font-semibold text-gray-900">{flight.flightNumber} ✈️</h3>
-            <p className="text-gray-600">{flight.departureTime} → {flight.arrivalTime}</p>
-            <p className="mt-2 text-lg font-bold text-blue-600">${flight.price}</p>
-            <p className="text-sm text-gray-500">{flight.layovers} layovers • {flight.duration} hrs • Rating: {flight.rating}⭐</p>
-            <button className="mt-4 w-full px-5 py-2 bg-blue-500 text-white font-bold rounded-md hover:bg-blue-600">Book Now</button>
-          </motion.div>
+    <div className="p-8 max-w-3xl mx-auto">
+      <h2 className="text-2xl font-bold text-center mb-6">✈️ Recommended Flights</h2>
+
+      {loading && <p className="text-center text-gray-600">Fetching recommendations...</p>}
+      {error && <p className="text-center text-red-600">{error}</p>}
+
+      <ul className="space-y-4">
+        {flights.map((flight) => (
+          <li key={flight.id} className="p-4 bg-white shadow-md rounded-lg">
+            <p className="text-lg font-semibold">{flight.airline} - {flight.from} → {flight.to}</p>
+            <p className="text-gray-600">Price: ${flight.price}</p>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
