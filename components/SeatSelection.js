@@ -1,61 +1,50 @@
-"use client";  // Ensure it's a Client Component
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import Link from "next/link";
+'use client'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
 
-const SeatSelection = ({ selectedSeats, setSelectedSeats, bookedSeats }) => {
-  const router = useRouter();  // ✅ Initialize router
-  const [localSelectedSeats, setLocalSelectedSeats] = useState([]);
+const SeatSelection = () => {
+  const [seats, setSeats] = useState([])
+  const [selectedSeat, setSelectedSeat] = useState(null)
 
   useEffect(() => {
-    setLocalSelectedSeats(selectedSeats);
-  }, [selectedSeats]);
+    fetchSeats()
+  }, [])
+
+  const fetchSeats = async () => {
+    try {
+      const response = await axios.get('/api/seats')
+      setSeats(response.data)
+      console.log('Fetched seats:', response.data)
+
+    } catch (error) {
+      console.error('Error fetching seats:', error)
+      
+    }
+  }
 
   const handleSeatClick = (seat) => {
-    if (bookedSeats.includes(seat) || localSelectedSeats.includes(seat)) return;
-
-    const updatedSeats = [...localSelectedSeats, seat];
-    setLocalSelectedSeats(updatedSeats);
-    setSelectedSeats(updatedSeats);
-  };
-
-  // const handleConfirmSelection = () => {
-  //   console.log("✅ Navigating to /dashboard");
-  //   router.push("/dashboard"); // ✅ Try push instead of replace
-  // };
-  
-
+    setSelectedSeat(seat)
+    // You can redirect to booking page or show a booking form here
+  }
 
   return (
-    <div className="p-8">
-      <h2>Select Your Seats</h2>
-      <div className="grid grid-cols-6 gap-4 p-5">
-        {Array.from({ length: 30 }, (_, i) => i + 1).map((seat) => (
-          <button
-            key={seat}
-            onClick={() => handleSeatClick(seat)}
-            className={`w-12 h-12 text-center rounded-lg font-bold transition 
-              ${bookedSeats.includes(seat) || localSelectedSeats.includes(seat)
-                ? "bg-gray-500 cursor-not-allowed"
-                : "bg-green-500 hover:bg-green-600"}
-            `}
-            disabled={bookedSeats.includes(seat) || localSelectedSeats.includes(seat)}
-          >
-            {seat}
-          </button>
-        ))}
-      </div>
-
-      {/* ✅ Confirm Button */}
-      <Link href="/dashboard">
-  <button className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg">
-    Confirm Selection
-  </button>
-</Link>
-
-
+    <div className="grid grid-cols-6 gap-4 p-4">
+      {seats.map((seat) => (
+        <div
+          key={seat.id}
+          className={`p-4 rounded-lg text-white text-center font-semibold cursor-pointer transition-colors duration-200 ${
+            seat.status
+              ? 'bg-green-500 hover:bg-green-600'
+              : 'bg-gray-500 cursor-not-allowed pointer-events-none'
+          }`}
+          onClick={() => seat.status && handleSeatClick(seat)}
+        >
+          {seat.seat_number}
+          
+        </div>
+      ))}
     </div>
-  );
-};
+  )
+}
 
-export default SeatSelection;
+export default SeatSelection

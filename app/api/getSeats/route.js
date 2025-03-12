@@ -18,7 +18,7 @@ export async function GET(req) {
       });
     }
 
-    // Query to get seat data
+    // ✅ Get seat data including booking status
     const [rows] = await pool.query(
       "SELECT seatId, seatNumber, isAvailable FROM seats WHERE flightId = ?",
       [flightId]
@@ -26,9 +26,8 @@ export async function GET(req) {
 
     const seats = rows.map((seat) => ({
       ...seat,
-      isAvailable: seat.isAvailable === 1, // Ensure boolean conversion
+      isAvailable: seat.isAvailable === 1, // Boolean conversion for clarity
     }));
-    
 
     console.log("Seats Data from DB:", seats);
 

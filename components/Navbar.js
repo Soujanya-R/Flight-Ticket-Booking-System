@@ -1,71 +1,178 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useSession, signOut } from "next-auth/react";
 
 const Navbar = () => {
+  const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <motion.nav
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={`flex justify-between items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg fixed w-full z-50 top-0 transition-all duration-300 ${scrolled ? "py-2 bg-opacity-90" : "py-4"}`}
+      className={`fixed w-full z-50 top-0 flex justify-between items-center px-6 md:px-12 transition-all duration-300 shadow-lg ${
+        scrolled
+          ? "py-2 bg-white/80 backdrop-blur-lg shadow-md"
+          : "py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+      }`}
     >
-      {/* Logo Section */}
-      <Link href="/" className="text-xl font-bold flex items-center space-x-2">
-        <Image src="/airplane.gif" alt="Airplane" width={40} height={40} className="rounded-full" />
-        <span className="hover:text-gray-200 transition duration-300">Flight Booking</span>
+      {/* ✅ Logo */}
+      <Link href="/" className="flex items-center space-x-2">
+        <Image
+          src="/airplane.gif"
+          alt="Airplane"
+          width={40}
+          height={40}
+          className="rounded-full shadow-lg"
+        />
+        <span className="text-xl font-bold hover:text-gray-200 transition duration-300">
+          AeroLink
+        </span>
       </Link>
 
-      {/* Navigation Links */}
-      <div className="space-x-6 hidden md:flex">
-        {["/flights", "/About", "/ContactUs", "/register", "/login"].map((href, index) => (
-          <Link
-            key={href}
-            href={href}
-            className="text-lg font-medium hover:text-gray-300 transition duration-300 relative after:block after:h-0.5 after:bg-white after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:duration-300"
-          >
-            {["Flights", "About", "Contact Us", "Register", "Login"][index]}
-          </Link>
-        ))}
-      </div>
+      {/* ✅ Desktop Menu */}
+      <div className="hidden md:flex space-x-6">
+        <Link
+          href="/smart-recommendations"
+          className="text-lg font-medium transition duration-300 hover:text-gray-200"
+        >
+          Flights
+        </Link>
+        <Link
+          href="/About"
+          className="text-lg font-medium transition duration-300 hover:text-gray-200"
+        >
+          About
+        </Link>
+        <Link
+          href="/ContactUs"
+          className="text-lg font-medium transition duration-300 hover:text-gray-200"
+        >
+          Contact Us
+        </Link>
 
-      {/* Mobile Menu Button */}
-      <div className="md:hidden">
-        <button onClick={() => setMenuOpen(!menuOpen)} className="text-white focus:outline-none text-2xl">
-          {menuOpen ? "✖" : "☰"}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="absolute top-full left-0 w-full bg-blue-700 text-white flex flex-col items-center py-4 space-y-4 md:hidden">
-          {["/pilot-mode", "/About", "/ContactUs", "/register", "/login"].map((href, index) => (
+        {session ? (
+          <>
             <Link
-              key={href}
-              href={href}
-              className="text-lg font-medium hover:text-gray-300 transition duration-300"
+              href="/dashboard"
+              className="text-lg font-medium transition duration-300 hover:text-gray-200"
+            >
+              Dashboard
+            </Link>
+            <button
+              onClick={() => signOut()}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium transition duration-300 hover:bg-red-700 shadow-md"
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/register"
+              className="text-lg font-medium transition duration-300 hover:text-gray-200"
+            >
+              Register
+            </Link>
+            <Link
+              href="/login"
+              className="text-lg font-medium transition duration-300 hover:text-gray-200"
+            >
+              Login
+            </Link>
+          </>
+        )}
+      </div>
+
+      {/* ✅ Mobile Menu Button */}
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="md:hidden text-white text-2xl focus:outline-none"
+      >
+        {menuOpen ? "✖" : "☰"}
+      </button>
+
+      {/* ✅ Mobile Menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -20, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute top-16 left-0 w-full bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg p-4 flex flex-col items-center space-y-4"
+          >
+            <Link
+              href="/smart-recommendations"
+              className="text-lg font-medium text-white hover:text-gray-200"
               onClick={() => setMenuOpen(false)}
             >
-              {["Flights", "About", "Contact Us", "Register", "Login"][index]}
+              Flights
             </Link>
-          ))}
-        </div>
-      )}
+            <Link
+              href="/About"
+              className="text-lg font-medium text-white hover:text-gray-200"
+              onClick={() => setMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link
+              href="/ContactUs"
+              className="text-lg font-medium text-white hover:text-gray-200"
+              onClick={() => setMenuOpen(false)}
+            >
+              Contact Us
+            </Link>
+
+            {session ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="text-lg font-medium text-white hover:text-gray-200"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    signOut();
+                    setMenuOpen(false);
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium transition duration-300 hover:bg-red-700 shadow-md"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/register"
+                  className="text-lg font-medium text-white hover:text-gray-200"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Register
+                </Link>
+                <Link
+                  href="/login"
+                  className="text-lg font-medium text-white hover:text-gray-200"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 };

@@ -8,7 +8,7 @@ export default async function BookingsPage() {
   if (!session?.user?.id) return <p>Please log in to see your bookings.</p>;
 
   const db = await getDatabase();
-  const [bookings] = await db.query("SELECT * FROM booking WHERE customerId = ?", [session.user.id]);
+  const [bookings] = await db.query("SELECT * FROM booking WHERE userId = ?", [session.user.id]);
 
   return (
     <div>

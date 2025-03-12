@@ -1,50 +1,73 @@
 "use client";
 import { useState } from "react";
 
-const Newsletter = () => {
-  const [email, setEmail] = useState("");
+export default function Newsletter() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+
   const [message, setMessage] = useState("");
 
-  const handleSubscribe = async () => {
-    if (!email.includes("@")) {
-      setMessage("❌ Please enter a valid email address.");
-      return;
-    }
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
-    try {
-      const response = await fetch("http://localhost:5000/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-      const data = await response.json();
-      setMessage(data.message);
-      if (response.ok) setEmail(""); // Clear input after success
-    } catch (error) {
-      setMessage("❌ Subscription failed. Try again later.");
+    const response = await fetch("http://localhost:3001/subscribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await response.json();
+    setMessage(data.message);
+    if (response.ok) {
+      setFormData({ name: "", email: "", phone: "" });
     }
   };
 
   return (
-    <section className="py-16 bg-blue-500 text-white text-center">
-      <h2 className="text-3xl font-bold mb-4">Stay Updated!</h2>
-      <p className="mb-6 text-lg">Sign up for our newsletter to get the latest travel deals.</p>
-      <div className="max-w-md mx-auto flex space-x-2">
+    <div className="p-6 max-w-md mx-auto bg-white rounded-xl shadow-md space-y-4">
+      <h2 className="text-xl font-bold">Subscribe to our Newsletter</h2>
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <input
+          type="text"
+          name="name"
+          placeholder="Your name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          className="w-full p-2 border rounded"
+        />
         <input
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
-          className="p-3 flex-1 rounded-md text-gray-800"
+          name="email"
+          placeholder="Your email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+          className="w-full p-2 border rounded"
         />
-        <button onClick={handleSubscribe} className="bg-black hover:bg-gray-800 px-6 py-3 rounded-md">
+        <input
+          type="tel"
+          name="phone"
+          placeholder="Your phone"
+          value={formData.phone}
+          onChange={handleChange}
+          required
+          className="w-full p-2 border rounded"
+        />
+        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">
           Subscribe
         </button>
-      </div>
-      {message && <p className="mt-4 text-lg">{message}</p>}
-    </section>
+      </form>
+      {message && <p className="text-center mt-2 text-sm">{message}</p>}
+    </div>
   );
-};
-
-export default Newsletter;
+}

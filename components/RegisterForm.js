@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { registerUser } from "@/app/auth/register";
 
 export default function RegisterForm() {
@@ -7,11 +8,20 @@ export default function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
+
     const result = await registerUser(name, email, password);
-    setMessage(result.success ? "✅ Registration successful!" : `❌ ${result.error}`);
+
+    if (result.success) {
+      setMessage("✅ Registration successful! Redirecting...");
+      setTimeout(() => router.push("/login"), 2000); // Redirect after 2s
+    } else {
+      setMessage(`❌ ${result.error}`);
+    }
   };
 
   return (

@@ -1,61 +1,42 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import Link from "next/link";
 
 export default function SeatsPage() {
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
   const flightId = searchParams.get("flightId");
+
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [flightDetails, setFlightDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const fetchFlightData = async () => {
+    if (!flightId) return;
+    setLoading(true);
+    try {
+      const flightRes = await fetch(`/api/getFlight?flightId=${flightId}`);
+      const seatRes = await fetch(`/api/getSeats?flightId=${flightId}`);
+      if (!flightRes.ok || !seatRes.ok) throw new Error("Failed to load data");
+
+      const flight = await flightRes.json();
+      const seatData = await seatRes.json();
+
+      setFlightDetails(flight.flight);
+      setSeats(seatData.seats);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchFlightData() {
-      if (!flightId) return;
-      setLoading(true);
-
-      try {
-        const response = await fetch(`/api/getFlight?flightId=${flightId}`);
-        if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
-
-        const textData = await response.text();
-        if (!textData) throw new Error("Received empty response from server.");
-
-        const data = JSON.parse(textData);
-        console.log("Flight API Response:", data);
-
-        if (data.flight) {
-          setFlightDetails(data.flight);
-          const seatResponse = await fetch(`/api/getSeats?flightId=${flightId}`);
-          if (!seatResponse.ok) throw new Error(`Seat API Error: ${seatResponse.status} ${seatResponse.statusText}`);
-
-          const seatTextData = await seatResponse.text();
-          if (!seatTextData) throw new Error("Received empty seat response from server.");
-
-          const seatData = JSON.parse(seatTextData);
-          console.log("Seats API Response:", seatData);
-
-          if (seatData.seats) {
-            setSeats(seatData.seats);
-          } else {
-            setError("Seats not available.");
-          }
-        } else {
-          setError("Flight details not found.");
-        }
-      } catch (err) {
-        console.error("❌ Fetch error:", err.message);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchFlightData();
   }, [flightId]);
 
@@ -65,109 +46,108 @@ export default function SeatsPage() {
     );
   };
 
-  const handleConfirmSelection = async () => {
+  const handleConfirm = async () => {
+    if (!session) {
+      sessionStorage.setItem("pendingSeats", JSON.stringify(selectedSeats));
+      sessionStorage.setItem("pendingFlightId", flightId);
+      router.push(`/login?callbackUrl=/seats?flightId=${flightId}`);
+      return;
+    }
+
     if (selectedSeats.length === 0) {
       alert("Please select at least one seat.");
       return;
     }
 
-    try {
-      const response = await fetch("/api/bookSeats", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ flightId, selectedSeats }),
-      });
+    const res = await fetch("/api/bookSeats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flightId, selectedSeats }),
+    });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        alert("Booking successful!");
-        setSeats((prevSeats) =>
-          prevSeats.map((seat) =>
-            selectedSeats.includes(seat.seatId)
-              ? { ...seat, isAvailable: false }
-              : seat
-          )
-        );
-        setSelectedSeats([]);
-        router.push("/dashboard");
-      } else {
-        alert(`Booking failed: ${result.error || "Unknown error"}`);
-      }
-    } catch (error) {
-      console.error("❌ Error while booking:", error);
-      alert("Booking failed. Please try again.");
+    const result = await res.json();
+    if (res.ok) {
+      alert("✅ Booking successful!");
+      setSelectedSeats([]);
+      fetchFlightData();
+      router.push("/dashboard");
+    } else {
+      alert(`❌ Booking failed: ${result.error}`);
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="p-8 flex flex-col items-center min-h-screen bg-gradient-to-br from-blue-800 to-indigo-500 text-white"
-    >
-      <h1 className="text-4xl pt-20 font-extrabold mb-8 shadow-lg">Select Your Seat</h1>
-      {loading ? (
-        <p className="text-gray-300 animate-pulse">Loading data...</p>
-      ) : error ? (
-        <p className="text-red-400 bg-red-800 p-3 rounded-lg">{error}</p>
-      ) : (
-        <>
-          {flightDetails && (
-            <div className="w-full max-w-3xl bg-white text-black p-6 rounded-lg shadow-lg mb-6">
-              <h2 className="text-2xl font-bold ">Flight Details :</h2>
-              <p className="text-lg">
-                <span className="font-semibold">From:</span> {flightDetails?.fromLocation ?? "Loading..."}  
-              </p>
-              <p className="text-lg"> 
-                <span className="font-semibold">To:</span> {flightDetails?.toLocation ?? "Loading..."}
-              </p>
-              <p className="text-lg">
-                <span className="font-semibold">Flight ID:</span> {flightDetails.flightNumber}
-              </p>
-              <div className="text-lg">
-                <p>
-                  <span className="font-semibold">Departure Time:</span> {flightDetails?.departureTime ?? "Loading..."}
-                </p>
-                <p>
-                  <span className="font-semibold">Arrival Time:</span> {flightDetails?.arrivalTime  ??  "Loading..."}
-                </p>
-              </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] via-[#1e3a8a] to-[#0f172a] text-white px-6 pt-20 relative overflow-hidden">
+      {/* Floating Background Effects */}
+      <div className="absolute w-80 h-80 bg-blue-500 rounded-full blur-[100px] opacity-30 top-10 left-10 animate-pulse"></div>
+      <div className="absolute w-80 h-80 bg-purple-600 rounded-full blur-[100px] opacity-30 bottom-10 right-10 animate-pulse"></div>
+
+      <motion.div
+        initial={{ opacity: 0, y: -15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        whileHover={{
+          scale: 1.02,
+          boxShadow: "0px 0px 40px rgba(255, 255, 255, 0.2)"
+        }}
+        className="max-w-3xl mx-auto bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-2xl"
+      >
+        <h1 className="text-4xl font-bold italic  text-center mb-8 text-blue-100 drop-shadow-[0_0_15px_rgba(59,130,246,0.8)]">
+          ✈️ Choose Your Seats
+        </h1>
+
+        {/* Flight Details */}
+        {loading ? (
+          <p className="text-center text-gray-400 animate-pulse">Loading flight details...</p>
+        ) : error ? (
+          <p className="text-center text-red-400">{error}</p>
+        ) : flightDetails && (
+          <div className="bg-white/5 border border-white/20 text-white p-5 rounded-xl mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-blue-400">✈️Flight Information</h2>
+            <div className="grid grid-cols-2 gap-4 text-base">
+              <p>🛩️<span className="font-medium text-blue-300">Airline:</span> {flightDetails.airline}</p>
+              <p>🛫<span className="font-medium text-blue-300">From:</span> {flightDetails.fromLocation}</p>
+              <p>🛬<span className="font-medium text-blue-300">To:</span> {flightDetails.toLocation}</p>
+              <p>🛩️<span className="font-medium text-blue-300">Flight No:</span> {flightDetails.flightNumber}</p>
+              <p>🕒<span className="font-medium text-blue-300">Departure:</span> {flightDetails.departureTime}</p>
+              <p>⏳<span className="font-medium text-blue-300">Arrival:</span> {flightDetails.arrivalTime}</p>
+              <p>🎟️<span className="font-medium text-blue-300">Price:</span> ₹{flightDetails.price}</p>
             </div>
-          )}
-          <div className="grid grid-cols-4 gap-4 bg-white p-6 rounded-lg shadow-2xl">
-            {seats.length > 0 ? (
-              seats.map((seat) => (
-                <motion.button
-                  key={seat.seatId}
-                  whileTap={{ scale: 0.9 }}
-                  className={`p-4 border rounded-lg text-lg font-semibold transition transform hover:scale-105 duration-200 shadow-md ${!seat.isAvailable
-                      ? "bg-gray-500 text-gray-800 cursor-not-allowed opacity-70"
-                      : selectedSeats.includes(seat.seatId)
-                        ? "bg-yellow-500 text-white hover:bg-yellow-600"
-                        : "bg-green-500 text-white hover:bg-green-600"
-                    }`}
-                  disabled={!seat.isAvailable}
-                  onClick={() => seat.isAvailable && handleSeatSelect(seat.seatId)}
-                >
-                  {seat.seatNumber || seat.seatId}
-                </motion.button>
-              ))
-            ) : (
-              <p className="text-red-500 text-lg font-semibold">No seats available</p>
-            )}
           </div>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            className="mt-6 bg-blue-700 text-white px-6 py-3 rounded-lg hover:bg-blue-900 transition shadow-xl text-lg font-bold"
-            onClick={handleConfirmSelection}
-          >
-            Confirm Selection
-          </motion.button>
-        </>
-      )}
-    </motion.div>
+        )}
+
+        {/* Seat Grid */}
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 mb-8">
+          {seats.map((seat) => (
+            <motion.button
+              key={seat.seatId}
+              whileHover={{ scale: seat.isAvailable ? 1.08 : 1 }}
+              whileTap={{ scale: 0.95 }}
+              disabled={!seat.isAvailable}
+              onClick={() => handleSeatSelect(seat.seatId)}
+              className={`py-3 rounded-lg text-base font-semibold transition-all border ${
+                !seat.isAvailable
+                  ? "bg-gray-500 text-gray-200 border-gray-600 cursor-not-allowed"
+                  : selectedSeats.includes(seat.seatId)
+                  ? "bg-yellow-400 text-black border-yellow-500 hover:bg-yellow-500"
+                  : "bg-green-500 text-white border-green-600 hover:bg-green-600"
+              }`}
+            >
+              {seat.seatNumber}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Confirm Button */}
+        <motion.button
+          whileHover={{ scale: 1.06, boxShadow: "0px 0px 30px rgba(59, 130, 246, 0.7)" }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleConfirm}
+          className="w-full py-4 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition duration-300 shadow-md"
+        >
+          ✅ Confirm Selection
+        </motion.button>
+      </motion.div>
+    </div>
   );
 }

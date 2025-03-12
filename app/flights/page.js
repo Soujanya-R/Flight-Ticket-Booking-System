@@ -16,29 +16,26 @@ export default function FlightsPage() {
 
   useEffect(() => {
     if (!from || !to || !date) {
-      setError("Missing required fields.");
+      setError("Missing required search parameters.");
       return;
     }
 
     const fetchFlights = async () => {
-      setLoading(true);
-      setError("");
-
       try {
-        const response = await fetch(`/api/getFlights?from=${from}&to=${to}&date=${date}`);
-        const data = await response.json();
+        setLoading(true);
+        setError("");
 
-        if (!response.ok) {
-          throw new Error(data.message || "Failed to fetch flights.");
-        }
+        const res = await fetch(`/api/getFlights?from=${from}&to=${to}&date=${date}`);
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message || "Failed to fetch flights.");
 
         setFlights(data.flights || []);
       } catch (err) {
-        console.error("❌ Fetch Error:", err);
         setError("Could not fetch flights. Please try again.");
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchFlights();
@@ -49,70 +46,82 @@ export default function FlightsPage() {
   };
 
   return (
-    <div className="relative pt-32 w-full h-screen overflow-hidden">
-      <video 
-        autoPlay 
-        loop 
-        muted 
-        className="absolute inset-0  w-full h-full object-cover opacity-50"
-      >
+    <div className="relative w-full min-h-screen overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#1e3a8a] to-[#0f172a] text-white">
+      {/* Background Video */}
+      <video autoPlay loop muted className="absolute inset-0 w-full h-full object-cover opacity-20">
         <source src="/clouds.mp4" type="video/mp4" />
       </video>
-      <div className="relative max-w-6xl mx-auto p-10  bg-white bg-opacity-80 rounded-xl shadow-2xl">
-        <motion.h2 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-4xl font-bold text-gray-900 mb-8 text-center"
-        >
-         ✈️ Available Flights
-        </motion.h2>
 
-        {error && <p className="text-red-600 text-center text-lg font-semibold">{error}</p>}
+      {/* Floating Blobs */}
+      <div className="absolute w-80 h-80 bg-blue-400 rounded-full blur-[120px] opacity-25 top-20 left-10 animate-pulse"></div>
+      <div className="absolute w-80 h-80 bg-purple-500 rounded-full blur-[120px] opacity-25 bottom-20 right-10 animate-pulse"></div>
+
+      {/* Main Container */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 max-w-4xl mx-auto mt-20 p-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg"
+      >
+        <h1 className="text-4xl font-bold text-center drop-shadow-lg">✈️ Available Flights</h1>
+
+        {error && <p className="text-center text-red-400 mt-4">{error}</p>}
 
         {loading ? (
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
-            className="text-center text-gray-600 text-lg"
+            className="text-center text-gray-300 mt-6"
           >
             Fetching flights...
           </motion.p>
         ) : flights.length > 0 ? (
-<div className="flex flex-wrap justify-center gap-6">
-{flights.map((flight) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            {flights.map((flight) => (
               <motion.div
                 key={flight.flightId}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="bg-white p-6  rounded-lg shadow-lg hover:shadow-2xl transform hover:scale-105 transition duration-300 border border-gray-200"
+                transition={{ duration: 0.5 }}
+                whileHover={{ scale: 1.03 }}
+                className="bg-white/10 border border-gray-500/30 backdrop-blur-lg p-6 rounded-xl shadow-md"
               >
-                <p className="text-xl font-semibold text-gray-800">✈️ {flight.flightNumber}</p>
-                <p className="text-gray-600 mt-2">
-                  {new Date(flight.departureTime).toLocaleString()} → {new Date(flight.arrivalTime).toLocaleString()}
+                <p className="text-xl font-semibold">🛫 {flight.flightNumber}</p>
+                <p className="text-gray-300 mt-2">
+                  <span className="font-medium text-white">From:</span> {from}
                 </p>
-                <button
-                  className="mt-4 px-5 py-2 w-full bg-blue-500 text-white font-bold rounded-md hover:bg-blue-600 hover:shadow-md transition duration-300 transform hover:scale-105"
+                <p className="text-gray-300 mt-1">
+                  <span className="font-medium text-white">To:</span> {to}
+                </p>
+                <p className="text-gray-300 mt-1">
+                  <span className="font-medium text-white">Departure:</span>{" "}
+                  {new Date(flight.departureTime).toLocaleString()}
+                </p>
+                <p className="text-gray-300 mt-1">
+                  <span className="font-medium text-white">Arrival:</span>{" "}
+                  {new Date(flight.arrivalTime).toLocaleString()}
+                </p>
+                <p className="text-gray-300 mt-1">
+                  <span className="font-medium text-white">Price:</span>{" "}
+                  ₹{Number(flight.price || 0).toLocaleString()}
+                </p>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => handleSelectFlight(flight.flightId)}
+                  className="mt-4 w-full py-2 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition duration-300"
                 >
                   Select Flight
-                </button>
+                </motion.button>
               </motion.div>
             ))}
           </div>
         ) : (
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="text-center text-gray-600 text-lg"
-          >
-            No flights found.
-          </motion.p>
+          <p className="text-center text-gray-300 mt-6">No flights found.</p>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

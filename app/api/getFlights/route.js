@@ -16,7 +16,7 @@ export async function GET(req) {
 
     // Ensure departureTime is compared properly as a DATE
     const [flights] = await db.execute(
-      "SELECT flightId, flightNumber, departureTime, arrivalTime, totalSeats, fromLocation, toLocation FROM Flight WHERE fromLocation = ? AND toLocation = ? AND DATE(departureTime) = ?",
+      "SELECT flightId, flightNumber, departureTime, arrivalTime, totalSeats, fromLocation, toLocation ,price FROM Flight WHERE fromLocation = ? AND toLocation = ? AND DATE(departureTime) = ?",
       [from, to, date]
     );
 
