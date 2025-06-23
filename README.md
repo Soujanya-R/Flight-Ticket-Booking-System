@@ -7,29 +7,33 @@ A modern and user-friendly flight booking system built with **Next.js**, **React
 
 ## Screenshots
 
-![App Screenshot1](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20124546.png)
+![App Screenshot1](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085423.png)
 
-![App Screenshot2](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20124609.png)
+![App Screenshot2](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085455.png)
 
-![App Screenshot3](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20124636.png)
+![App Screenshot3](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085528.png)
 
-![App Screenshot4](https://github.com/Soujanya-R/dum/blob/master/Screenshot%202025-03-18%20124703.png?raw=true)
+![App Screenshot4](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085548.png)
 
-![App Screenshot5](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20135434.png)
+![App Screenshot5](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085603.png)
 
-![App Screenshot6](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20135509.png)
+![App Screenshot6](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085628.png)
 
-![App Screenshot7](https://github.com/Soujanya-R/dum/blob/master/Screenshot%202025-03-18%20135546.png?raw=true)
+![App Screenshot7](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085654.png)
 
-![App Screenshot8](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20135618.png)
+![App Screenshot8](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085724.png)
 
-![App Screenshot9](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20135708.png)
+![App Screenshot9](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085742.png)
 
-![App Screenshot10](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20135716.png)
+![App Screenshot10](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085905.png)
 
-![App Screenshot11](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20135727.png)
+![App Screenshot11](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20085943.png)
 
-![App Screenshot10](https://raw.githubusercontent.com/Soujanya-R/dum/refs/heads/master/Screenshot%202025-03-18%20135745.png)
+![App Screenshot12](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20090015.png)
+
+![App Screenshot13](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20090037.png)
+
+![App Screenshot14](https://github.com/Soujanya-R/Flight-Ticket-Booking-System/blob/main/Screenshot%202025-04-16%20094854.png)
 ## 🚀 Features
 
 
